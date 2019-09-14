@@ -5,13 +5,12 @@ import os
 import time
 import math
 from urllib.error import HTTPError
+import argparse
 
 def handle_err(cause,src,id_num):
-	raw_data = cause.read()
-	lines = raw_data.split('\n')
+	print("ERROR while downloading "+str(id_num))
 	with open("err/{0}/{1}.error".format(src,id_num),'w',encoding='utf-8') as ofile:
-		for line in lines: 
-			ofile.write(line+'\n')
+		ofile.write(repr(cause))
 
 def get_raw(url):
 	print("get data from "+url)
@@ -36,13 +35,11 @@ def get_page(search, page, per_page, src):
 				for line in lines: 
 					ofile.write(line+'\n')
 		except HTTPError as e:
-			print("HTTPError!")
 			handle_err(e,src["source"],id_num)
 		except json.decoder.JSONDecodeError as e:
-			print("JSONDecodeError!")
 			handle_err(e,src["source"],id_num)
 
-def get_java_code(search):
+def get_java_code(search,info):
 	params = {'q':search,'lan':'23'}
 	url = "https://searchcode.com/api/codesearch_I/?"+urllib.parse.urlencode(params)
 	raw_data = get_raw(url)
@@ -75,4 +72,13 @@ def get_java_code(search):
 		time.sleep(5)
 	print("DONE!")
 
-#get_java_code("stackoverflow.com")
+
+parser = argparse.ArgumentParser(description='Download Java Code from searchcode, that matches the searchquery.')
+parser.add_argument('query',metavar='Q', nargs=1, help="the searchquery.")
+parser.add_argument('-i','--info',action='store_true',help="only get the number of results.")
+args = parser.parse_args()
+query = args.query[0]
+info = args.info
+print(query)
+print(info)
+#get_java_code(query,info)
