@@ -9,7 +9,7 @@ import argparse
 
 
 def handle_err(url, cause, src, id_num):
-    print("ERROR while downloading " + str(id_num) + " saving msg in " + str(id_num) + ".error")
+    # print("ERROR while downloading " + str(id_num) + " saving msg in " + str(id_num) + ".error")
     with open("err/{0}/{1}.error".format(src, id_num), 'w', encoding='utf-8') as ofile:
         ofile.write(url + '\n' + repr(cause))
 
@@ -44,7 +44,24 @@ def get_page(search, page, per_page, src):
             handle_err(url, e, src["source"], id_num)
 
 
-def get_java_code(search, info, per_page):
+def get_java_code_from_repo(search, src, per_page):
+    params = {'q': search, 'lan': '23', 'src': src["id"]}
+    url = "https://searchcode.com/api/codesearch_I/?" + urllib.parse.urlencode(params)
+    raw_data = get_raw(url)
+    total = raw_data["total"]
+    pages = int(math.ceil(total / per_page))
+    bar_len = 50
+    for page in range(0, pages):
+        get_page(search, page, per_page, src)
+
+        prog = int(((page + 1) * bar_len) // pages)
+        bar = '+' * prog + '-' * (bar_len - prog)
+        print("Downloading from " + src["source"] + ": " + "[" + bar + "] " + str(int((prog / bar_len) * 100)) + "%",
+              end='\r')
+    print()
+
+
+def get_java_code(search, info, repo, per_page):
     params = {'q': search, 'lan': '23'}
     url = "https://searchcode.com/api/codesearch_I/?" + urllib.parse.urlencode(params)
     raw_data = get_raw(url)
@@ -57,42 +74,40 @@ def get_java_code(search, info, per_page):
             os.makedirs("err")
         except FileExistsError as e:
             pass
-        with open("out/src_filters.out", 'w', encoding='utf-8') as ofile:
+        print("Starting download of the Java files...")
+        if repo == -1:
             for src in src_filters:
-                ofile.write(str(src) + '\n')
                 try:
                     os.makedirs("out/{0}".format(src["source"]))
                     os.makedirs("err/{0}".format(src["source"]))
                 except FileExistsError as e:
                     pass
-        for src in src_filters:
-            print("=========================")
-            print(src["source"])
-            params = {'q': search, 'lan': '23', 'src': src["id"]}
-            url = "https://searchcode.com/api/codesearch_I/?" + urllib.parse.urlencode(params)
-            raw_data = get_raw(url)
-            total = raw_data["total"]
-            print("Total: " + str(total))
-            pages = int(math.ceil(total / per_page))
-            print("Pages: " + str(pages))
-            print("=========================")
-            print("Starting download of files...")
-            for page in range(0, pages):
-                get_page(search, page, per_page, src)
-                time.sleep(1)
-            print("Finished download of files!"+'\n')
-            time.sleep(5)
+                get_java_code_from_repo(search, src, per_page)
+                time.sleep(5)
+        else:
+            for src in src_filters:
+                if src["id"] == repo:
+                    try:
+                        os.makedirs("out/{0}".format(src["source"]))
+                        os.makedirs("err/{0}".format(src["source"]))
+                    except FileExistsError as e:
+                        pass
+                    get_java_code_from_repo(search, src, per_page)
         print("DONE WITH DOWNLOADS!")
     else:
         for src in src_filters:
-            print(src["source"] + " with a total of " + str(src["count"]) + " result(s).")
+            print(src["source"] + "[repo_id:" + str(src["id"]) + "]" + " with a total of " + str(src["count"])
+                  + " result(s).")
 
 
 parser = argparse.ArgumentParser(
     description='Download Java Code from searchcode, that contain the given searchquery.')
 parser.add_argument('query', metavar='Q', nargs=1, help="the searchquery.")
 parser.add_argument('-i', '--info', action='store_true', help="only get the number of results.")
+parser.add_argument('-r', '--repo', nargs=1, type=int, default=[-1],
+                    help="specify the repo to search by giving the repo_id.")
 args = parser.parse_args()
 query = args.query[0]
 info = args.info
-get_java_code(query, info, 20)
+repo = args.repo[0]
+get_java_code(query, info, repo, 20)
