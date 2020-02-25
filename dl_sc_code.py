@@ -17,7 +17,7 @@ def handle_err(url, cause, src, id_num):
 def get_raw(url):
     # print("get data from "+url)
     contents = urllib.request.urlopen(url).read()
-    return json.loads(contents)
+    return json.loads(contents.decode('utf-8'))
 
 
 def get_page(search, page, per_page, src):
@@ -55,7 +55,7 @@ def get_java_code_from_repo(search, src, per_page):
         get_page(search, page, per_page, src)
 
         prog = int(((page + 1) * bar_len) // pages)
-        bar = '+' * prog + '-' * (bar_len - prog)
+        bar = '#' * prog + '.' * (bar_len - prog)
         print("Downloading from " + src["source"] + ": " + "[" + bar + "] " + str(int((prog / bar_len) * 100)) + "%",
               end='\r')
     print()
@@ -66,8 +66,8 @@ def get_java_code(search, info, repo, per_page):
     url = "https://searchcode.com/api/codesearch_I/?" + urllib.parse.urlencode(params)
     raw_data = get_raw(url)
     src_filters = raw_data["source_filters"]
-    print("Found " + str(len(src_filters)) + " repo-source(s) with java files, that contain \""
-          + search + "\"." + '\n')
+    print("Found " + str(len(src_filters)) + " repo-source(s) with java files, that contain " 
+          + "the string \"" + search + "\"." + '\n')
     if not info:
         try:
             os.makedirs("out")
