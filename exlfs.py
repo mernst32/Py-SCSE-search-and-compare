@@ -68,25 +68,32 @@ if dir_flag:
                 
 else:
     if len(out) == 0:
-        print("filename,\"StackOverflow Links\"")
+        if copy:
+            print("Filename,\"First Line\",StackOverflow Links\"")
+        else:
+            print("Filename,\"StackOverflow Links\"")
         delimeter = ','
         result = scan_file(file, query, copy)
         if len(result) > 0:
             if copy:
-                print(entry.name + "," + result[0] + "," + "\"" 
+                print(file + "," + result[0] + "," + "\"" 
                       + delimeter.join(result[1:]) + "\"")
             else:
-                print(entry.name + "," + "\"" + delimeter.join(result) + "\"")
+                print(file + "," + "\"" + delimeter.join(result) + "\"")
     else:
         with open(out, 'w', encoding="utf-8") as ofile:
-            ofile.write("filename,\"StackOverflow Links\"\n")
+            if copy:
+                ofile.write("Filename,\"First Line\",\"StackOverflow Links\"\n")
+            else:    
+                ofile.write("Filename,\"StackOverflow Links\"\n")
+                
             delimeter = ','
             result = scan_file(file, query, copy)
             if len(result) > 0:
                 if copy:
-                    ofile.write(entry.name + "," + result[0] + "," + "\"" 
+                    ofile.write(file + "," + result[0] + "," + "\"" 
                                 + delimeter.join(result[1:]) + "\"\n")
                 else:
-                    ofile.write(entry.name + "," + "\"" + delimeter.join(result) + "\"\n")
+                    ofile.write(file + "," + "\"" + delimeter.join(result) + "\"\n")
         
         
