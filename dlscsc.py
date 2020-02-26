@@ -40,7 +40,7 @@ def get_page(search, page, per_page, src):
                 code = get_raw(url)["code"]
                 lines = code.split('\n')
                 with open("out/{0}/{1}.java".format(src["source"], id_num), 'w', encoding='utf-8') as ofile:
-                    ofile.write("// " + url + '\n')
+                    ofile.write("// https://searchcode.com/codesearch/raw/" + str(id_num) + "/" + '\n')
                     for line in lines:
                         ofile.write(line + '\n')
             except HTTPError as e:

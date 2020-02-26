@@ -2,9 +2,12 @@ import os
 import argparse
 
 
-def scan_file(filename, query):
+def scan_file(filename, query, copy=False):
     found = []
     with open(filename, 'r', encoding="utf-8") as ifile:
+        if copy:
+            line = ifile.readline().replace("//","",1)
+            found.append(line.strip())
         for line in ifile:
             i = line.find(query)
             if i is not -1:
@@ -20,45 +23,70 @@ parser.add_argument('file', metavar='F', nargs=1, help="file to be scanned.")
 parser.add_argument('query', metavar='Q', nargs=1, help="the searchquery.")
 parser.add_argument('-d', '--dir', action='store_true', help="scan a directory instead of a file.")
 parser.add_argument('-o', '--outfile', nargs=1, default=[""], help = "save output in given output file.")
+parser.add_argument('-c', '--copyline', action='store_true', help = "copy first line of the scanned file(s)," 
+                    + "removing comment characters like \"//\"")
 args = parser.parse_args()
 file = args.file[0]
 query = args.query[0]
 dir_flag = args.dir
 out = args.outfile[0]
+copy = args.copyline
 
 if dir_flag:
     with os.scandir(file) as entries:
         if len(out) == 0:
-            print("filename,\"StackOverflow Links\"")
+            if copy:
+                print("Filename,\"First Line\",StackOverflow Links\"")
+            else:
+                print("Filename,\"StackOverflow Links\"")
             for entry in entries:
                 if entry.is_file():
                     delimeter = ','
-                    result = delimeter.join(scan_file(file + entry.name, query))
+                    result = scan_file(file + entry.name, query, copy)
                     if len(result) > 0:
-                        print(entry.name + "," + "\"" + result + "\"")
+                        if copy:
+                            print(entry.name + "," + result[0] + "," + "\"" 
+                                  + delimeter.join(result[1:]) + "\"")
+                        else:
+                            print(entry.name + "," + "\"" + delimeter.join(result) + "\"")
         else:
             with open(out, 'w', encoding="utf-8") as ofile:
-                ofile.write("filename,\"StackOverflow Links\"\n")
+                if copy:
+                    ofile.write("Filename,\"First Line\",\"StackOverflow Links\"\n")
+                else:    
+                    ofile.write("Filename,\"StackOverflow Links\"\n")
                 for entry in entries:
                     if entry.is_file():
                         delimeter = ','
-                        result = delimeter.join(scan_file(file + entry.name, query))
+                        result = scan_file(file + entry.name, query, copy)
                         if len(result) > 0:
-                            ofile.write(entry.name + "," + "\"" + result + "\"\n")
+                            if copy:
+                                ofile.write(entry.name + "," + result[0] + "," + "\"" 
+                                  + delimeter.join(result[1:]) + "\"\n")
+                            else:
+                                ofile.write(entry.name + "," + "\"" + delimeter.join(result) + "\"\n")
                 
 else:
     if len(out) == 0:
         print("filename,\"StackOverflow Links\"")
         delimeter = ','
-        result = delimeter.join(scan_file(file, query))
+        result = scan_file(file, query, copy)
         if len(result) > 0:
-            print(file + "," + "\"" + result + "\"")
+            if copy:
+                print(entry.name + "," + result[0] + "," + "\"" 
+                      + delimeter.join(result[1:]) + "\"")
+            else:
+                print(entry.name + "," + "\"" + delimeter.join(result) + "\"")
     else:
         with open(out, 'w', encoding="utf-8") as ofile:
             ofile.write("filename,\"StackOverflow Links\"\n")
             delimeter = ','
-            result = delimeter.join(scan_file(file, query))
+            result = scan_file(file, query, copy)
             if len(result) > 0:
-                ofile.write(file + "," + "\"" + result + "\"\n")
+                if copy:
+                    ofile.write(entry.name + "," + result[0] + "," + "\"" 
+                                + delimeter.join(result[1:]) + "\"\n")
+                else:
+                    ofile.write(entry.name + "," + "\"" + delimeter.join(result) + "\"\n")
         
         
