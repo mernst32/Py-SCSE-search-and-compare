@@ -14,11 +14,12 @@ def scan_file(filename, query):
 
 
 parser = argparse.ArgumentParser(
-    description="Scans Java files for a given query and returns the lines containing said query.")
+    description="Scans Java files for a given query and returns the lines containing said query starting "
+        + "from the first occurrence.")
 parser.add_argument('file', metavar='F', nargs=1, help="file to be scanned.")
 parser.add_argument('query', metavar='Q', nargs=1, help="the searchquery.")
 parser.add_argument('-d', '--dir', action='store_true', help="scan a directory instead of a file.")
-parser.add_argument('-o', '--outfile', nargs=1, default=[""], help = "save output in given file")
+parser.add_argument('-o', '--outfile', nargs=1, default=[""], help = "save output in given output file.")
 args = parser.parse_args()
 file = args.file[0]
 query = args.query[0]
