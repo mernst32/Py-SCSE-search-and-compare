@@ -11,7 +11,6 @@ import argparse
 def handle_err(url, cause, src, id_num):
     # print("ERROR while downloading " + str(id_num) + " saving msg in " + str(id_num) + ".error")
     try:
-        os.makedirs("err")
         os.makedirs("err/{0}".format(src))
     except FileExistsError as e:
         pass
@@ -23,7 +22,6 @@ def get_raw(url):
     # print("get data from "+url)
     contents = urllib.request.urlopen(url).read()
     return json.loads(contents.decode('utf-8'))
-        
 
 
 def get_page(search, page, per_page, src):
@@ -69,15 +67,15 @@ def get_java_code_from_repo(search, src, per_page):
         print("Downloading from " + src["source"] + ": ")
         for page in range(0, pages):
             dl_size = dl_size + get_page(search, page, per_page, src)
-            
+
             if dl_size == 0:
                 print("Nothing to download!")
             else:
                 prog = int(((page + 1) * bar_len) // pages)
                 bar = '#' * prog + '.' * (bar_len - prog)
-                print("\t" + str(int((prog / bar_len) * 100)) + "%" + " [" + bar + "] " 
-                    + str(dl_size) + "/" + str(total) + " Downloaded", 
-                    end='\r')
+                print("\t" + str(int((prog / bar_len) * 100)) + "%" + " [" + bar + "] "
+                      + str(dl_size) + "/" + str(total) + " Downloaded",
+                      end='\r')
             time.sleep(1)
         print()
     except HTTPError as e:
@@ -90,11 +88,12 @@ def get_java_code(search, info, repo, per_page):
     try:
         raw_data = get_raw(url)
         src_filters = raw_data["source_filters"]
-        print("Found " + str(len(src_filters)) + " repo-source(s) with java files, that contain " 
-            + "the string \"" + search + "\"." + '\n')
+        print("Found " + str(len(src_filters)) + " repo-source(s) with java files, that contain "
+              + "the string \"" + search + "\"." + '\n')
         if not info:
             try:
                 os.makedirs("out")
+                os.makedirs("err")
             except FileExistsError as e:
                 pass
             print("Starting download of the Java files...")
@@ -118,11 +117,11 @@ def get_java_code(search, info, repo, per_page):
         else:
             for src in src_filters:
                 print(src["source"] + "[repo_id:" + str(src["id"]) + "]" + " with a total of " + str(src["count"])
-                    + " result(s).")
+                      + " result(s).")
                 if src["count"] > (50 * per_page):
                     print("WARNING:The searchcode API only allows the download from up to 50 pages!")
                     print("\tSo this script will only be able to get " + str(50 * per_page) + " of the "
-                            + str(src["count"]) + " files!")
+                          + str(src["count"]) + " files!")
     except HTTPError as e:
         print("ERROR:Could not get data from " + url + ":" + repr(e))
 
