@@ -40,7 +40,7 @@ def get_page(search, page, per_page, src):
                 code = get_raw(url)["code"]
                 lines = code.split('\n')
                 with open("out/{0}/{1}.java".format(src["source"], id_num), 'w', encoding='utf-8') as ofile:
-                    ofile.write("// URL: " + url + '\n')
+                    ofile.write("// " + url + '\n')
                     for line in lines:
                         ofile.write(line + '\n')
             except HTTPError as e:
@@ -69,7 +69,7 @@ def get_java_code_from_repo(search, src, per_page):
             dl_size = dl_size + get_page(search, page, per_page, src)
 
             if dl_size == 0:
-                print("Nothing to download!")
+                print("\tNothing to download!")
             else:
                 prog = int(((page + 1) * bar_len) // pages)
                 bar = '#' * prog + '.' * (bar_len - prog)
