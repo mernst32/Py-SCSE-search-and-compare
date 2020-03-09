@@ -2,3 +2,4 @@ err/
 out/
 .idea
 __pycache__/
+*.csv
