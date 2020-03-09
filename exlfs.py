@@ -12,6 +12,9 @@ def scan_file(filename, query, copy=False):
             i = line.find(query)
             if i is not -1:
                 line = line[i:]
+                chars = ";,)\""
+                for char in chars:
+                    line = line.replace(char, "")
                 found.append(line.strip())
     return found
 
@@ -36,9 +39,9 @@ if dir_flag:
     with os.scandir(file) as entries:
         if len(out) == 0:
             if copy:
-                print("Filename,\"First Line\",StackOverflow Links\"")
+                print("Filename,\"First Line\",\"Found Lines\"")
             else:
-                print("Filename,\"StackOverflow Links\"")
+                print("Filename,\"Found Lines\"")
             for entry in entries:
                 if entry.is_file():
                     delimeter = ','
@@ -52,9 +55,9 @@ if dir_flag:
         else:
             with open(out, 'w', encoding="utf-8") as ofile:
                 if copy:
-                    ofile.write("Filename,\"First Line\",\"StackOverflow Links\"\n")
+                    ofile.write("Filename,\"First Line\",\"Found Lines\"\n")
                 else:
-                    ofile.write("Filename,\"StackOverflow Links\"\n")
+                    ofile.write("Filename,\"Found Lines\"\n")
                 for entry in entries:
                     if entry.is_file():
                         delimeter = ','
@@ -69,9 +72,9 @@ if dir_flag:
 else:
     if len(out) == 0:
         if copy:
-            print("Filename,\"First Line\",StackOverflow Links\"")
+            print("Filename,\"First Line\",\"Found Lines\"")
         else:
-            print("Filename,\"StackOverflow Links\"")
+            print("Filename,\"Found Lines\"")
         delimeter = ','
         result = scan_file(file, query, copy)
         if len(result) > 0:
