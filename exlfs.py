@@ -25,14 +25,15 @@ def scan_file(file, query, copy=False, out="", verbose=False):
             print("Filename,\"First Line\",\"Found Lines\"")
         else:
             print("Filename,\"Found Lines\"")
-        delimeter = ','
         result = search_file(file, query, copy)
         if len(result) > 0:
             if copy:
-                print(file + "," + result[0] + "," + "\""
-                      + delimeter.join(result[1:]) + "\"")
+                for res in result[1:]:
+                    print(file + "," + result[0] + "," + "\""
+                          + res + "\"")
             else:
-                print(file + "," + "\"" + delimeter.join(result) + "\"")
+                for res in result:
+                    print(file + "," + "\"" + res + "\"")
     else:
         with open(out, 'w', encoding="utf-8") as ofile:
             if verbose:
@@ -41,15 +42,15 @@ def scan_file(file, query, copy=False, out="", verbose=False):
                 ofile.write("Filename,\"First Line\",\"StackOverflow Links\"\n")
             else:
                 ofile.write("Filename,\"StackOverflow Links\"\n")
-
-            delimeter = ','
             result = search_file(file, query, copy)
             if len(result) > 0:
                 if copy:
-                    ofile.write(file + "," + result[0] + "," + "\""
-                                + delimeter.join(result[1:]) + "\"\n")
+                    for res in result[1:]:
+                        ofile.write(file + "," + result[0] + "," + "\""
+                                    + res + "\"\n")
                 else:
-                    ofile.write(file + "," + "\"" + delimeter.join(result) + "\"\n")
+                    for res in result:
+                        ofile.write(file + "," + "\"" + res + "\"\n")
 
 
 def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
@@ -60,14 +61,15 @@ def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
             print("Filename,\"Found Lines\"")
         for subdir, dir, files in os.walk(rootdir):
             for file in files:
-                delimeter = ','
                 result = search_file(os.path.join(subdir, file), query, copy)
                 if len(result) > 0:
                     if copy:
-                        print(os.path.join(subdir, file) + "," + result[0] + "," + "\""
-                              + delimeter.join(result[1:]) + "\"")
+                        for res in result[1:]:
+                            print(os.path.join(subdir, file) + "," + result[0] + "," + "\""
+                                  + res + "\"")
                     else:
-                        print(os.path.join(subdir, file) + "," + "\"" + delimeter.join(result) + "\"")
+                        for res in result:
+                            print(os.path.join(subdir, file) + "," + "\"" + res + "\"")
     else:
         with open(out, 'w', encoding="utf-8") as ofile:
             if copy:
@@ -82,10 +84,12 @@ def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
                     result = search_file(os.path.join(subdir, file), query, copy)
                     if len(result) > 0:
                         if copy:
-                            ofile.write(os.path.join(subdir, file) + "," + result[0] + "," + "\""
-                                        + delimeter.join(result[1:]) + "\"\n")
+                            for res in result[1:]:
+                                ofile.write(os.path.join(subdir, file) + "," + result[0] + "," + "\""
+                                            + res + "\"\n")
                         else:
-                            ofile.write(os.path.join(subdir, file) + "," + "\"" + delimeter.join(result) + "\"\n")
+                            for res in result:
+                                ofile.write(os.path.join(subdir, file) + "," + "\"" + res + "\"\n")
 
 
 parser = argparse.ArgumentParser(
