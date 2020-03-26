@@ -133,7 +133,5 @@ parser.add_argument('-i', '--info', action='store_true', help="only get the numb
 parser.add_argument('-r', '--repo', nargs=1, type=int, default=[-1],
                     help="specify the repo to search by giving the repo_id.")
 args = parser.parse_args()
-query = args.query[0]
-info = args.info
-repo = args.repo[0]
-get_java_code(query, info, repo, 20)
+
+get_java_code(args.query[0], args.info, args.repo[0], 20)

@@ -22,9 +22,9 @@ def search_file(filename, query, copy=False):
 def scan_file(file, query, copy=False, out="", verbose=False):
     if len(out) == 0:
         if copy:
-            print("Filename,\"First Line\",\"Found Lines\"")
+            print("Filename,\"First Line\",\"Found Line\"")
         else:
-            print("Filename,\"Found Lines\"")
+            print("Filename,\"Found Line\"")
         result = search_file(file, query, copy)
         if len(result) > 0:
             if copy:
@@ -39,9 +39,9 @@ def scan_file(file, query, copy=False, out="", verbose=False):
             if verbose:
                 print(os.path.join(file))
             if copy:
-                ofile.write("Filename,\"First Line\",\"StackOverflow Links\"\n")
+                ofile.write("Filename,\"First Line\",\"Found Line\"\n")
             else:
-                ofile.write("Filename,\"StackOverflow Links\"\n")
+                ofile.write("Filename,\"Found Line\"\n")
             result = search_file(file, query, copy)
             if len(result) > 0:
                 if copy:
@@ -104,14 +104,8 @@ parser.add_argument('-c', '--copyline', action='store_true', help="copy first li
 parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
 args = parser.parse_args()
-file = args.file[0]
-query = args.query[0]
-r_flag = args.recursive
-out = args.outfile[0]
-copy = args.copyline
-verbose = args.verbose
 
-if r_flag:
-    scan_dirs(file, query, copy, out, verbose)
+if args.recursive:
+    scan_dirs(args.file[0], args.query[0], args.copyline, args.outfile[0], args.verbose)
 else:
-    scan_file(file, query, copy, out, verbose)
+    scan_file(args.file[0], args.query[0], args.copyline, args.outfile[0], args.verbose)
