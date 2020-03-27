@@ -1,9 +1,11 @@
 import stackexchange
 import argparse
+from xml.sax.saxutils import unescape
+import os
 
 
 def extract_snippets(body):
-    body = body.split('\n')
+    body = unescape(body).split('\n')
     snippets = []
     snippet = []
     begin = "<pre><code>"
@@ -38,14 +40,39 @@ def get_accepted_answer(question):
 
 def get_best_answer(question):
     answers = question.answers
-    max = answers[0]
+    best = answers[0]
     for answer in answers[1:]:
-        if max.score < answer.score:
-            max = answer
-    return max
+        if best.score < answer.score:
+            best = answer
+    return best
 
 
-def handle_input(e_id, question, best, accepted):
+def save_snippet_to_file(snippet, output):
+    with open(output, 'w', encoding='utf-8') as ofile:
+        ofile.writelines(snippet)
+
+
+def save_snippets(snippets, output, filename="snippet", e_id=-1):
+    if len(snippets) == 1:
+        save_snippet_to_file(snippets, output)
+    elif len(snippets) > 1:
+        folder = output.split('.')[0]
+        try:
+            os.makedirs(folder)
+        except FileExistsError:
+            pass
+        i = 1
+        for snippet in snippets:
+            save_snippet_to_file(snippet, os.path.join(folder, "{0}_{1}.java".format(filename, i)))
+            i = i + 1
+    else:
+        if e_id is not -1:
+            print("{0}: No code snippets to download!".format(e_id))
+        else:
+            print("No code snippets to download!")
+
+
+def handle_input(e_id, question, best, accepted, input, output):
     so = stackexchange.Site(stackexchange.StackOverflow)
     so.include_body = True
     snippets = []
@@ -64,7 +91,17 @@ def handle_input(e_id, question, best, accepted):
     else:
         a = so.answer(e_id)
         snippets = extract_snippets(a.body)
-    print(snippets)
+    if len(output) == 0:
+        if len(snippets) == 0:
+            print("{0}: No code snippets to download!".format(e_id))
+        else:
+            i = 1
+            for snippet in snippets:
+                print(("=" * 25) + ("[ {0}. Snippet ]".format(i)) + ("=" * 25))
+                print(snippet)
+                i = i + 1
+    else:
+        save_snippets(snippets, output, e_id=e_id)
 
 
 parser = argparse.ArgumentParser(
@@ -81,6 +118,13 @@ parser.add_argument('-a', '--accepted-answer', action='store_true',
                     help="When the question option is used, this option tells the program to get the accepted answer "
                          "of the specified question. If there is no accepted answer the highest rated answer is used "
                          "instead. ")
+parser.add_argument('-o', '--output-file', nargs=1, default=[""],
+                    help="Saves extracted code snippet to file with the specified name, or if there are more than one "
+                         "to a folder of the same name.")
+parser.add_argument('-i', '--input-file', nargs=1, default=[""],
+                    help="Parses data from CSV file and uses them to get code snippets. REQUIRED HEADER: "
+                         "\"Stackoverflow_Links\". OPTIONAL HEADERS: \"Download\",\"SC_Filepath\".")
 
 args = parser.parse_args()
-handle_input(args.entity_id[0], args.question, args.best_answer, args.accepted_answer)
+handle_input(args.entity_id[0], args.question, args.best_answer, args.accepted_answer, args.input_file[0],
+             args.output_file[0])
