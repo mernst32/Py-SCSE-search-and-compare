@@ -47,14 +47,16 @@ def get_best_answer(question):
     return best
 
 
-def save_snippet_to_file(snippet, output_file):
+def save_snippet_to_file(snippet, output_file, verbose=False):
+    if verbose:
+        print(output_file)
     with open(output_file, 'w', encoding='utf-8') as ofile:
         ofile.writelines(snippet)
 
 
-def save_snippets(snippets, output_file, filename="snippet", e_id=-1):
+def save_snippets(snippets, output_file, filename="snippet", e_id=-1, verbose=False):
     if len(snippets) == 1:
-        save_snippet_to_file(snippets, output_file)
+        save_snippet_to_file(snippets, output_file, verbose)
     elif len(snippets) > 1:
         folder = output_file.split('.')[0]
         try:
@@ -63,7 +65,7 @@ def save_snippets(snippets, output_file, filename="snippet", e_id=-1):
             pass
         i = 1
         for snippet in snippets:
-            save_snippet_to_file(snippet, os.path.join(folder, "{0}_{1}.java".format(filename, i)))
+            save_snippet_to_file(snippet, os.path.join(folder, "{0}_{1}.java".format(filename, i)), verbose)
             i = i + 1
     else:
         if e_id is not -1:
@@ -72,7 +74,7 @@ def save_snippets(snippets, output_file, filename="snippet", e_id=-1):
             print("No code snippets to download!")
 
 
-def handle_input(e_id, question, best, accepted, input_file, output_file):
+def handle_input(e_id, question, best, accepted, input_file, output_file, verbose=False):
     so = stackexchange.Site(stackexchange.StackOverflow)
     so.include_body = True
     snippets = []
@@ -83,14 +85,18 @@ def handle_input(e_id, question, best, accepted, input_file, output_file):
                 a = get_accepted_answer(q)
                 if a is None:
                     a = get_best_answer(q)
+                print("Extract code snippets from answer {0}...".format(e_id))
                 snippets = extract_snippets(a.body)
             if best:
                 a = get_best_answer(q)
+                print("Extract code snippets from answer {0}...".format(e_id))
                 snippets = extract_snippets(a.body)
             if not accepted and not best:
+                print("Extract code snippets from question {0}...".format(e_id))
                 snippets = extract_snippets(q.body)
         else:
             a = so.answer(e_id)
+            print("Extract code snippets from answer {0}...".format(e_id))
             snippets = extract_snippets(a.body)
         if len(output_file) == 0:
             if len(snippets) == 0:
@@ -102,7 +108,7 @@ def handle_input(e_id, question, best, accepted, input_file, output_file):
                     print(snippet)
                     i = i + 1
         else:
-            save_snippets(snippets, output_file, e_id=e_id)
+            save_snippets(snippets, output_file, e_id=e_id, verbose=verbose)
 
 
 parser = argparse.ArgumentParser(
@@ -125,7 +131,8 @@ parser.add_argument('-o', '--output-file', nargs=1, default=[""],
 parser.add_argument('-i', '--input-file', nargs=1, default=[""],
                     help="Parses data from CSV file and uses them to get code snippets. REQUIRED HEADER: "
                          "\"Stackoverflow_Links\". OPTIONAL HEADERS: \"Download\",\"SC_Filepath\".")
+parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
 args = parser.parse_args()
 handle_input(args.entity_id[0], args.question, args.best_answer, args.accepted_answer, args.input_file[0],
-             args.output_file[0])
+             args.output_file[0], args.verbose)
