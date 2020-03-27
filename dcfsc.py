@@ -82,7 +82,7 @@ def get_java_code_from_repo(search, src, per_page):
         print("ERROR:Could not get data from " + url + ":" + repr(e))
 
 
-def get_java_code(search, info, repo, per_page):
+def handle_input(search, info, repo, per_page):
     params = {'q': search, 'lan': '23'}
     url = "https://searchcode.com/api/codesearch_I/?" + urllib.parse.urlencode(params)
     try:
@@ -134,4 +134,4 @@ parser.add_argument('-r', '--repo', nargs=1, type=int, default=[-1],
                     help="specify the repo to search by giving the repo_id.")
 args = parser.parse_args()
 
-get_java_code(args.query[0], args.info, args.repo[0], 20)
+handle_input(args.query[0], args.info, args.repo[0], 20)

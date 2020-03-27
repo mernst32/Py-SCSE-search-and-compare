@@ -1,4 +1,6 @@
 import stackexchange
+import argparse
+
 
 def extract_snippets(body):
     body = body.split('\n')
@@ -26,10 +28,16 @@ def extract_snippets(body):
     return snippets
 
 
-so = stackexchange.Site(stackexchange.StackOverflow)
-so.include_body = True
+def handle_input(id):
+    so = stackexchange.Site(stackexchange.StackOverflow)
+    so.include_body = True
+    a = so.answer(id)
+    print(len(extract_snippets(a.body)))
 
-# https://stackoverflow.com/a/992060
-a = so.answer(992060)
-print(len(extract_snippets(a.body)))
 
+parser = argparse.ArgumentParser(
+    description='Download code snippets from StackOverflow')
+parser.add_argument('entity_id', metavar='I', nargs=1, help="The id of the entity, answer is the default, from which "
+                                                            "the code snippets will be downloaded.")
+args = parser.parse_args()
+handle_input(args.entity_id[0])

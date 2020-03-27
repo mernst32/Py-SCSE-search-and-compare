@@ -92,6 +92,13 @@ def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
                                 ofile.write(os.path.join(subdir, file) + "," + "\"" + res + "\"\n")
 
 
+def handle_input(file, query, copyline, outfile, verbose):
+    if args.recursive:
+        scan_dirs(file, query, copyline, outfile, verbose)
+    else:
+        scan_file(file, query, copyline, outfile, verbose)
+
+
 parser = argparse.ArgumentParser(
     description="Scans Java files for a given query and returns the lines containing said query starting "
                 + "from the first occurrence.")
@@ -104,8 +111,4 @@ parser.add_argument('-c', '--copyline', action='store_true', help="copy first li
 parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
 args = parser.parse_args()
-
-if args.recursive:
-    scan_dirs(args.file[0], args.query[0], args.copyline, args.outfile[0], args.verbose)
-else:
-    scan_file(args.file[0], args.query[0], args.copyline, args.outfile[0], args.verbose)
+handle_input(args.file[0], args.query[0], args.copyline, args.outfile[0], args.verbose)
