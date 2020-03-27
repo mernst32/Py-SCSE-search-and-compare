@@ -47,16 +47,16 @@ def get_best_answer(question):
     return best
 
 
-def save_snippet_to_file(snippet, output):
-    with open(output, 'w', encoding='utf-8') as ofile:
+def save_snippet_to_file(snippet, output_file):
+    with open(output_file, 'w', encoding='utf-8') as ofile:
         ofile.writelines(snippet)
 
 
-def save_snippets(snippets, output, filename="snippet", e_id=-1):
+def save_snippets(snippets, output_file, filename="snippet", e_id=-1):
     if len(snippets) == 1:
-        save_snippet_to_file(snippets, output)
+        save_snippet_to_file(snippets, output_file)
     elif len(snippets) > 1:
-        folder = output.split('.')[0]
+        folder = output_file.split('.')[0]
         try:
             os.makedirs(folder)
         except FileExistsError:
@@ -72,36 +72,37 @@ def save_snippets(snippets, output, filename="snippet", e_id=-1):
             print("No code snippets to download!")
 
 
-def handle_input(e_id, question, best, accepted, input, output):
+def handle_input(e_id, question, best, accepted, input_file, output_file):
     so = stackexchange.Site(stackexchange.StackOverflow)
     so.include_body = True
     snippets = []
-    if question:
-        q = so.question(e_id)
-        if accepted:
-            a = get_accepted_answer(q)
-            if a is None:
+    if len(input_file) == 0:
+        if question:
+            q = so.question(e_id)
+            if accepted:
+                a = get_accepted_answer(q)
+                if a is None:
+                    a = get_best_answer(q)
+                snippets = extract_snippets(a.body)
+            if best:
                 a = get_best_answer(q)
-            snippets = extract_snippets(a.body)
-        if best:
-            a = get_best_answer(q)
-            snippets = extract_snippets(a.body)
-        if not accepted and not best:
-            snippets = extract_snippets(q.body)
-    else:
-        a = so.answer(e_id)
-        snippets = extract_snippets(a.body)
-    if len(output) == 0:
-        if len(snippets) == 0:
-            print("{0}: No code snippets to download!".format(e_id))
+                snippets = extract_snippets(a.body)
+            if not accepted and not best:
+                snippets = extract_snippets(q.body)
         else:
-            i = 1
-            for snippet in snippets:
-                print(("=" * 25) + ("[ {0}. Snippet ]".format(i)) + ("=" * 25))
-                print(snippet)
-                i = i + 1
-    else:
-        save_snippets(snippets, output, e_id=e_id)
+            a = so.answer(e_id)
+            snippets = extract_snippets(a.body)
+        if len(output_file) == 0:
+            if len(snippets) == 0:
+                print("{0}: No code snippets to download!".format(e_id))
+            else:
+                i = 1
+                for snippet in snippets:
+                    print(("=" * 25) + ("[ {0}. Snippet ]".format(i)) + ("=" * 25))
+                    print(snippet)
+                    i = i + 1
+        else:
+            save_snippets(snippets, output_file, e_id=e_id)
 
 
 parser = argparse.ArgumentParser(
@@ -112,7 +113,7 @@ parser.add_argument('entity_id', metavar='I', nargs=1,
 parser.add_argument('-q', '--question', action='store_true',
                     help="Get the code snippet(s) from a question body instead.")
 parser.add_argument('-b', '--best-answer', action='store_true',
-                    help="When the question option is used, this option tells the programm to get the highest rated "
+                    help="When the question option is used, this option tells the program to get the highest rated "
                          "answer of the specified question.")
 parser.add_argument('-a', '--accepted-answer', action='store_true',
                     help="When the question option is used, this option tells the program to get the accepted answer "

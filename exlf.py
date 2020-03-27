@@ -106,8 +106,8 @@ parser.add_argument('file', metavar='F', nargs=1, help="file to be scanned.")
 parser.add_argument('query', metavar='Q', nargs=1, help="the searchquery.")
 parser.add_argument('-r', '--recursive', action='store_true', help="scan a directory recursively.")
 parser.add_argument('-o', '--output-file', nargs=1, default=[""], help="save output in given output file.")
-parser.add_argument('-c', '--copy-line', action='store_true', help="copy first line of the scanned file(s),"
-                                                                  + "removing comment characters like \"//\"")
+parser.add_argument('-c', '--copy-line', action='store_true',
+                    help="copy first line of the scanned file(s), removing comment characters like \"//\"")
 parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
 args = parser.parse_args()
