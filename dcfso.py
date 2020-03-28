@@ -128,7 +128,7 @@ def handle_csv(input_file, verbose=False):
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 copyfile(row[fp_key], dest)
             if verbose:
-                print("{0} -> {1}".format(row[fp_key], dest))
+                print("cp {0} to {1}".format(row[fp_key], dest))
             so_ids["dest"][last_id] = os.path.dirname(dest)
             line_count = line_count + 1
     if verbose:
@@ -183,14 +183,30 @@ def handle_input(e_id, question, best, accepted, input_file, output_file, verbos
     else:
         so_ids = handle_csv(e_id, verbose)
         print("Got {0} answer-ids and {1} question-ids".format(len(so_ids["answers"]), len(so_ids["questions"])))
-        print("Downloading the code snippets in the answers bodies...")
+        print("Downloading the code snippets...")
         for chunk in list(chunks(so_ids["answers"], 100)):
             answers = so.answers(chunk)
-            for answer in answers:
-                snippets = extract_snippets(answer.body)
-                a_id = answer.id
-                save_snippets(snippets, os.path.join(so_ids["dest"][str(a_id)], "soa_{0}.java".format(a_id)),
-                              e_id=a_id, verbose=verbose)
+            for a in answers:
+                snippets = extract_snippets(a.body)
+                save_snippets(snippets, os.path.join(so_ids["dest"][str(a.id)], "soa_{0}.java".format(a.id)),
+                              e_id=a.id, verbose=verbose)
+        print(so_ids["questions"])
+        for chunk in list(chunks(so_ids["questions"], 100)):
+            questions = so.questions(chunk)
+            for q in questions:
+                n_id = 0
+                if best:
+                    a = get_best_answer(q)
+                    snippets = extract_snippets(a.body)
+                if accepted:
+                    a = get_accepted_answer(q)
+                    if a is None:
+                        a = get_best_answer(q)
+                    snippets = extract_snippets(a.body)
+                if (not best) and (not accepted):
+                    snippets = extract_snippets(q.body)
+                    save_snippets(snippets, os.path.join(so_ids["dest"][str(q.id)], "soa_{0}.java".format(q.id)),
+                                  e_id=q.id, verbose=verbose)
     print("Done!")
 
 
