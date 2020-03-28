@@ -22,9 +22,9 @@ def search_file(filename, query, copy=False):
 def scan_file(file, query, copy=False, out="", verbose=False):
     if len(out) == 0:
         if copy:
-            print("Filename,\"First Line\",\"Found Line\"")
+            print("SC_Filepath,\"First Line\",\"Found Line\"")
         else:
-            print("Filename,\"Found Line\"")
+            print("SC_Filepath,\"Found Line\"")
         result = search_file(file, query, copy)
         if len(result) > 0:
             if copy:
@@ -39,9 +39,9 @@ def scan_file(file, query, copy=False, out="", verbose=False):
             if verbose:
                 print(os.path.join(file))
             if copy:
-                ofile.write("Filename,\"First Line\",\"Found Line\"\n")
+                ofile.write("SC_Filepath,\"First Line\",\"Found Line\"\n")
             else:
-                ofile.write("Filename,\"Found Line\"\n")
+                ofile.write("SC_Filepath,\"Found Line\"\n")
             result = search_file(file, query, copy)
             if len(result) > 0:
                 if copy:
@@ -56,9 +56,9 @@ def scan_file(file, query, copy=False, out="", verbose=False):
 def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
     if len(out) == 0:
         if copy:
-            print("Filename,\"First Line\",\"Found Lines\"")
+            print("SC_Filepath,\"First Line\",\"Found Line\"")
         else:
-            print("Filename,\"Found Lines\"")
+            print("SC_Filepath,\"Found Line\"")
         for subdir, dir, files in os.walk(rootdir):
             for file in files:
                 result = search_file(os.path.join(subdir, file), query, copy)
@@ -73,9 +73,9 @@ def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
     else:
         with open(out, 'w', encoding="utf-8") as ofile:
             if copy:
-                ofile.write("Filename,\"First Line\",\"Found Lines\"\n")
+                ofile.write("SC_Filepath,\"First Line\",\"Found Line\"\n")
             else:
-                ofile.write("Filename,\"Found Lines\"\n")
+                ofile.write("SC_Filepath,\"Found Line\"\n")
             for subdir, dir, files in os.walk(rootdir):
                 for file in files:
                     if verbose:
