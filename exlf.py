@@ -12,10 +12,17 @@ def search_file(filename, query, copy=False):
             i = line.find(query)
             if i is not -1:
                 line = line[i:]
-                chars = ";,)\""
+                chars = ":;,()\"{}<>"
+                tags = ["</a>", "<br/>", "<br>"]
+                for tag in tags:
+                    line = line.replace(tag, "")
                 for char in chars:
                     line = line.replace(char, "")
-                found.append(line.strip())
+                line = line.strip()
+                j = line.find(" ")
+                if j is not -1:
+                    line = line[:j]
+                found.append(line)
     return found
 
 
@@ -37,7 +44,7 @@ def scan_file(file, query, copy=False, out="", verbose=False):
     else:
         with open(out, 'w', encoding="utf-8") as ofile:
             if verbose:
-                print(os.path.join(file))
+                print("scan: {0}".format(os.path.join(file)))
             if copy:
                 ofile.write("SC_Filepath,\"First Line\",\"Found Line\"\n")
             else:
@@ -46,8 +53,7 @@ def scan_file(file, query, copy=False, out="", verbose=False):
             if len(result) > 0:
                 if copy:
                     for res in result[1:]:
-                        ofile.write(file + "," + result[0] + "," + "\""
-                                    + res + "\"\n")
+                        ofile.write(file + "," + result[0] + "," + "\"" + res + "\"\n")
                 else:
                     for res in result:
                         ofile.write(file + "," + "\"" + res + "\"\n")
@@ -79,14 +85,13 @@ def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
             for subdir, dir, files in os.walk(rootdir):
                 for file in files:
                     if verbose:
-                        print(os.path.join(subdir, file))
+                        print("scan: {0}".format(os.path.join(subdir, file)))
                     delimeter = ','
                     result = search_file(os.path.join(subdir, file), query, copy)
                     if len(result) > 0:
                         if copy:
                             for res in result[1:]:
-                                ofile.write(os.path.join(subdir, file) + "," + result[0] + "," + "\""
-                                            + res + "\"\n")
+                                ofile.write(os.path.join(subdir, file) + "," + result[0] + "," + "\"" + res + "\"\n")
                         else:
                             for res in result:
                                 ofile.write(os.path.join(subdir, file) + "," + "\"" + res + "\"\n")

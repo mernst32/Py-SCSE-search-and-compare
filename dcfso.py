@@ -4,6 +4,24 @@ from xml.sax.saxutils import unescape
 import os
 import csv
 from shutil import copyfile
+from itertools import cycle
+import sys
+import time
+import threading
+
+
+done = False
+
+
+def animate():
+    loading = cycle(['|', '/', '-', '\\'])
+    for c in loading:
+        if done:
+            break
+        sys.stdout.write("\rDownloading... {0}".format(c))
+        sys.stdout.flush()
+        time.sleep(0.1)
+    sys.stdout.write("\r")
 
 
 def extract_snippets(body):
@@ -42,11 +60,14 @@ def get_accepted_answer(question):
 
 def get_best_answer(question):
     answers = question.answers
-    best = answers[0]
-    for answer in answers[1:]:
-        if best.score < answer.score:
-            best = answer
-    return best
+    if len(answers) > 0:
+        best = answers[0]
+        if len(answers) > 1:
+            for answer in answers[1:]:
+                if best.score < answer.score:
+                    best = answer
+        return best
+    return None
 
 
 def save_snippet_to_file(snippet, output_file, verbose=False):
@@ -59,6 +80,7 @@ def save_snippet_to_file(snippet, output_file, verbose=False):
 def save_snippets(snippets, output_file, filename="snippet", e_id=-1, verbose=False):
     if len(snippets) == 1:
         save_snippet_to_file(snippets, output_file, verbose)
+        return 0
     elif len(snippets) > 1:
         folder = output_file.split('.')[0]
         try:
@@ -69,11 +91,9 @@ def save_snippets(snippets, output_file, filename="snippet", e_id=-1, verbose=Fa
         for snippet in snippets:
             save_snippet_to_file(snippet, os.path.join(folder, "{0}_{1}.java".format(filename, i)), verbose)
             i = i + 1
+        return 0
     else:
-        if e_id is not -1:
-            print("{0}: No code snippets to download!".format(e_id))
-        else:
-            print("No code snippets to download!")
+        return e_id
 
 
 def handle_csv(input_file, verbose=False):
@@ -106,108 +126,162 @@ def handle_csv(input_file, verbose=False):
                     line_count = line_count + 1
                     continue
             so_link = row[so_key].split('/')
-            for i in range(len(so_link) - 1):
-                if (so_link[i] == "answer") or (so_link[i] == "a"):
-                    link_id = so_link[i + 1]
-                    so_ids["answers"].append(link_id)
-                    last_id = link_id
-                if (so_link[i] == "questions") or (so_link[i] == "q"):
-                    if (i + 3) == (len(so_link) - 1):
-                        if so_link[i + 3] != "":
-                            link_id = so_link[i + 3].split('#')[0]
-                            so_ids["answers"].append(link_id)
-                            last_id = link_id
-                    else:
-                        link_id = so_link[i + 1]
-                        so_ids["questions"].append(link_id)
+            try:
+                for i in range(len(so_link) - 1):
+                    if (so_link[i] == "answer") or (so_link[i] == "a"):
+                        link_id = int(so_link[i + 1])
+                        so_ids["answers"].append(link_id)
                         last_id = link_id
-            dest = os.path.join(input_file.split('.')[0], row[fp_key].split('.')[0], "searchcode_file.java")
+                        continue
+                    if (so_link[i] == "questions") or (so_link[i] == "q"):
+                        if (i + 3) <= (len(so_link) - 1):
+                            if len(so_link[i + 3]) > 0:
+                                link_id = int(so_link[i + 3].split('#')[0])
+                                so_ids["answers"].append(link_id)
+                                last_id = link_id
+                                continue
+                        else:
+                            link_id = int(so_link[i + 1])
+                            so_ids["questions"].append(link_id)
+                            last_id = link_id
+                            continue
+                dest = os.path.join(input_file.split('.')[0], row[fp_key].split('.')[0], "searchcode_file.java")
+            except ValueError:
+                print("On line {0}: the SO link \"{1}\" is invalid!".format(line_count + 1, row[so_key]))
             try:
                 copyfile(row[fp_key], dest)
             except FileNotFoundError:
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 copyfile(row[fp_key], dest)
             if verbose:
-                print("cp {0} to {1}".format(row[fp_key], dest))
+                print("cp: {0} -> {1}".format(row[fp_key], dest))
             so_ids["dest"][last_id] = os.path.dirname(dest)
             line_count = line_count + 1
-    if verbose:
-        print("Processed {0} line(s).".format(line_count))
+    print("Processed {0} line(s).".format(line_count))
     return so_ids
 
 
-def chunks(l, n):
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
+def chunks(a_list, n):
+    for i in range(0, len(a_list), n):
+        yield a_list[i:i + n]
 
 
 def handle_input(e_id, question, best, accepted, input_file, output_file, verbose=False):
+    global done
     so = stackexchange.Site(stackexchange.StackOverflow)
     so.include_body = True
     snippets = []
-    if not input_file:
-        try:
-            e_id = int(e_id)
-            if question:
-                q = so.question(e_id)
-                if accepted:
-                    a = get_accepted_answer(q)
-                    if a is None:
+    requests = 0
+    try:
+        if not input_file:
+            try:
+                e_id = int(e_id)
+                if question:
+                    q = so.question(e_id)
+                    if accepted:
+                        a = get_accepted_answer(q)
+                        if a is None:
+                            a = get_best_answer(q)
+                        if a is None:
+                            print("Question {0} has no answers!".format(e_id))
+                            return -1
+                        print("Extract code snippets from answer {0}...".format(e_id))
+                        snippets = extract_snippets(a.body)
+                    if best:
                         a = get_best_answer(q)
-                    print("Extract code snippets from answer {0}...".format(e_id))
-                    snippets = extract_snippets(a.body)
-                if best:
-                    a = get_best_answer(q)
-                    print("Extract code snippets from answer {0}...".format(e_id))
-                    snippets = extract_snippets(a.body)
-                if not accepted and not best:
-                    print("Extract code snippets from question {0}...".format(e_id))
-                    snippets = extract_snippets(q.body)
-            else:
-                a = so.answer(e_id)
-                print("Extract code snippets from answer {0}...".format(e_id))
-                snippets = extract_snippets(a.body)
-            if len(output_file) == 0:
-                if len(snippets) == 0:
-                    print("{0}: No code snippets to download!".format(e_id))
+                        if a is None:
+                            print("Question {0} has no answers!".format(e_id))
+                            return -1
+                        print("Extract code snippets from answer {0}...".format(e_id))
+                        snippets = extract_snippets(a.body)
+                    if not accepted and not best:
+                        print("Extract code snippets from question {0}...".format(e_id))
+                        snippets = extract_snippets(q.body)
                 else:
-                    i = 1
-                    for snippet in snippets:
-                        print(("=" * 25) + ("[ {0}. Snippet ]".format(i)) + ("=" * 25))
-                        print(snippet)
-                        i = i + 1
+                    a = so.answer(e_id)
+                    print("Extract code snippets from answer {0}...".format(e_id))
+                    snippets = extract_snippets(a.body)
+                if len(output_file) == 0:
+                    if len(snippets) == 0:
+                        print("{0}: No code snippets to download!".format(e_id))
+                    else:
+                        i = 1
+                        for snippet in snippets:
+                            print(("=" * 25) + ("[ {0}. Snippet ]".format(i)) + ("=" * 25))
+                            print(snippet)
+                            i = i + 1
+                else:
+                    res = save_snippets(snippets, output_file, e_id=e_id, verbose=verbose)
+                    if res is not 0:
+                        print("{0} had no code snippet in its body!".format(res))
+                    elif res is -1:
+                        print("Found no code snippet in the body!")
+            except ValueError:
+                print("Please enter an Integer for I!")
+            requests = requests + so.requests_used
+        else:
+            no_snippets = {"answers": [], "questions": []}
+            so_ids = handle_csv(e_id, verbose)
+            if so_ids is None:
+                print("The csv file needs to have the headers Stackoverflow_Links and SC_Filepath!")
+                return -1
+            print("Got {0} answer-ids and {1} question-ids.\n".format(len(so_ids["answers"]), len(so_ids["questions"])))
+            if verbose:
+                print("Downloading the code snippets...")
             else:
-                save_snippets(snippets, output_file, e_id=e_id, verbose=verbose)
-        except ValueError:
-            print("Please enter an Integer for I!")
-    else:
-        so_ids = handle_csv(e_id, verbose)
-        print("Got {0} answer-ids and {1} question-ids".format(len(so_ids["answers"]), len(so_ids["questions"])))
-        print("Downloading the code snippets...")
-        for chunk in list(chunks(so_ids["answers"], 100)):
-            answers = so.answers(chunk)
-            for a in answers:
-                snippets = extract_snippets(a.body)
-                save_snippets(snippets, os.path.join(so_ids["dest"][str(a.id)], "soa_{0}.java".format(a.id)),
-                              e_id=a.id, verbose=verbose)
-        print(so_ids["questions"])
-        for chunk in list(chunks(so_ids["questions"], 100)):
-            questions = so.questions(chunk)
-            for q in questions:
-                n_id = 0
-                if best:
-                    a = get_best_answer(q)
+                print("Starting download of code snippets...")
+                t = threading.Thread(target=animate)
+                t.start()
+            for chunk in list(chunks(so_ids["answers"], 100)):
+                answers = so.answers(chunk)
+                requests = requests + so.requests_used
+                for a in answers:
                     snippets = extract_snippets(a.body)
-                if accepted:
-                    a = get_accepted_answer(q)
-                    if a is None:
-                        a = get_best_answer(q)
-                    snippets = extract_snippets(a.body)
-                if (not best) and (not accepted):
-                    snippets = extract_snippets(q.body)
-                    save_snippets(snippets, os.path.join(so_ids["dest"][str(q.id)], "soa_{0}.java".format(q.id)),
-                                  e_id=q.id, verbose=verbose)
-    print("Done!")
+                    res = save_snippets(snippets, os.path.join(so_ids["dest"][a.id], "a_{0}.java".format(a.id)),
+                                        e_id=a.id, verbose=verbose)
+                    if (res is not 0) and (res is not -1):
+                        no_snippets["answers"].append(res)
+            for chunk in list(chunks(so_ids["questions"], 100)):
+                questions = so.questions(chunk)
+                requests = requests + so.requests_used
+                for q in questions:
+                    if accepted or best:
+                        a = None
+                        if accepted:
+                            a = get_accepted_answer(q)
+                        if a is None:
+                            a = get_best_answer(q)
+                        if a is None:
+                            if verbose:
+                                print("Question {0} has no answers!".format(q.id))
+                        else:
+                            res = save_snippets(extract_snippets(a.body),
+                                                os.path.join(so_ids["dest"][q.id], "a_{0}.java".format(q.id)),
+                                                e_id=a.id, verbose=verbose)
+                            if (res is not 0) and (res is not -1):
+                                no_snippets["answers"].append(res)
+                    if (not best) and (not accepted):
+                        res = save_snippets(extract_snippets(q.body),
+                                            os.path.join(so_ids["dest"][q.id], "q_{0}.java".format(q.id)),
+                                            e_id=q.id, verbose=verbose)
+                        if (res is not 0) and (res is not -1):
+                            no_snippets["questions"].append(res)
+            if verbose:
+                if len(no_snippets["answers"]) > 0:
+                    print("The following answers had no code snippets in their body:\n{0}".format(no_snippets["answers"]))
+                if len(no_snippets["questions"]) > 0:
+                    print("The following questions had no code snippets in their body:\n{0}".
+                          format(no_snippets["questions"]))
+            else:
+                done = True
+                time.sleep(1)
+                print("There were {0} answers and {1} questions with no code snippets in their body"
+                      .format(len(no_snippets["answers"]), len(no_snippets["questions"])))
+        print("Done! {0} of the API request quota used and {1} remains!".format(requests, so.requests_left))
+    except stackexchange.StackExchangeError as e:
+        done = True
+        time.sleep(1)
+        print("StackExchangeError: {0}".format(e.message))
 
 
 parser = argparse.ArgumentParser(

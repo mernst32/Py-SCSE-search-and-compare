@@ -9,7 +9,6 @@ import argparse
 
 
 def handle_err(url, cause, src, id_num):
-    # print("ERROR while downloading " + str(id_num) + " saving msg in " + str(id_num) + ".error")
     try:
         os.makedirs("err/{0}".format(src))
     except FileExistsError as e:
@@ -33,7 +32,6 @@ def get_page(search, page, per_page, src):
         id_list = []
         for result in results:
             id_list.append(result["id"])
-        # print("getting " + str(len(results)) + " items from page " + str(page))
         for id_num in id_list:
             url = "https://searchcode.com/api/result/" + str(id_num) + "/"
             try:
@@ -49,7 +47,7 @@ def get_page(search, page, per_page, src):
                 handle_err(url, e, src["source"], id_num)
         return len(id_list)
     except HTTPError as e:
-        print("ERROR:Could not get data from " + url + ":" + repr(e))
+        print("ERROR:Could not get data from {0}: {1}".format(url, repr(e)))
         return 0
 
 
@@ -73,13 +71,12 @@ def get_java_code_from_repo(search, src, per_page):
             else:
                 prog = int(((page + 1) * bar_len) // pages)
                 bar = '#' * prog + '.' * (bar_len - prog)
-                print("\t" + str(int((prog / bar_len) * 100)) + "%" + " [" + bar + "] "
-                      + str(dl_size) + "/" + str(total) + " Downloaded",
+                print("\t{0}% [{1}] {2}/{3} Downloaded".format(int((prog / bar_len) * 100), bar, dl_size, total),
                       end='\r')
             time.sleep(1)
         print()
     except HTTPError as e:
-        print("ERROR:Could not get data from " + url + ":" + repr(e))
+        print("ERROR:Could not get data from {0}: {1}".format(url, repr(e)))
 
 
 def handle_input(search, info, repo, per_page):
@@ -123,7 +120,7 @@ def handle_input(search, info, repo, per_page):
                     print("\tSo this script will only be able to get " + str(50 * per_page) + " of the "
                           + str(src["count"]) + " files!")
     except HTTPError as e:
-        print("ERROR:Could not get data from " + url + ":" + repr(e))
+        print("ERROR:Could not get data from {0}: {1}".format(url, repr(e)))
 
 
 parser = argparse.ArgumentParser(
