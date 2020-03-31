@@ -260,6 +260,8 @@ def get_as_snippets(so, so_data, verbose=False):
     saved = 0
     no_snippets = 0
     for count, chunk in enumerate(list(chunks(so_data["answers"], 100))):
+        if count % 20:
+            time.sleep(1)
         a_ids = []
         for so_item in chunk:
             a_ids.append(so_item.so_id)
@@ -278,6 +280,8 @@ def get_qs_snippets(so, so_data, accepted=False, best=False, verbose=False):
     saved = 0
     no_snippets = 0
     for count, chunk in enumerate(list(chunks(so_data["questions"], 100))):
+        if count % 20:
+            time.sleep(1)
         q_ids = []
         for so_item in chunk:
             q_ids.append(so_item.so_id)
@@ -352,6 +356,7 @@ def get_snippets_from_one_so_entity(so, e_id, question, best, accepted, output_f
         print("ValueError: Please use an integer for I, was \'{0}\'".format(e_id))
         return -1
     return 0
+
 
 def handle_input(e_id, question, best, accepted, input_file, output_file, verbose=False):
     global done
