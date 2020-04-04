@@ -1,2 +1,2 @@
-pip install py-stackexchange
-pip install mosspy
+py-stackexchange==2.2.7
+mosspy==1.0.8
