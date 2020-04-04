@@ -4,3 +4,5 @@ out/
 __pycache__/
 *.csv
 test/
+*.html
+creds.txt
