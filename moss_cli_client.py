@@ -57,7 +57,9 @@ def handle_input(user_id, base_folder):
                   .format("100", '#' * bar_len, total, total))
 
     report_index.append("</body></html>")
-    with open(os.path.join(base_folder, "links_to_reports.html"), mode='w', encoding='utf-8') as ofile:
+    report_path = os.path.join(base_folder, "links_to_reports.html")
+    print("Creating report linking file {0}...".format(report_path))
+    with open(report_path, mode='w', encoding='utf-8') as ofile:
         for line in report_index:
             ofile.write("{0}\n".format(line))
 
