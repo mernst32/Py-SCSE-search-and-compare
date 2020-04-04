@@ -56,6 +56,7 @@ def handle_input(user_id, base_folder):
             print("\t{0}% [{1}] {2}/{3} folders, whose java files were submitted"
                   .format("100", '#' * bar_len, total, total))
 
+    # save links to the reports in one file
     report_index.append("</body></html>")
     report_path = os.path.join(base_folder, "links_to_reports.html")
     print("Creating report linking file {0}...c".format(report_path))
