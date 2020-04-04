@@ -13,7 +13,7 @@ def search_file(filename, query, copy=False):
             if i is not -1:
                 line = line[i:]
                 chars = ":;,()\"{}<>"
-                tags = ["</a>", "<br/>", "<br>"]
+                tags = ["</a>", "<br/>", "<br>", "</pre>", "<pre>"]
                 for tag in tags:
                     line = line.replace(tag, "")
                 for char in chars:
