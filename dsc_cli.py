@@ -62,7 +62,7 @@ def get_java_code_from_repo(search, src, per_page):
         pages = int(math.ceil(total / per_page))
         bar_len = 50
         dl_size = 0
-        print("Downloading from " + src["source"] + ": ")
+        print("Downloading from {0}: ".format(src["source"]))
         for page in range(0, pages):
             dl_size = dl_size + get_page(search, page, per_page, src)
 
@@ -85,8 +85,8 @@ def handle_input(search, info, repo, per_page):
     try:
         raw_data = get_raw(url)
         src_filters = raw_data["source_filters"]
-        print("Found " + str(len(src_filters)) + " repo-source(s) with java files, that contain "
-              + "the string \"" + search + "\"." + '\n')
+        print("Found {0} repo-source(s) with java files, that contain the string \"{1}\".\n"
+              .format(len(src_filters), search))
         if not info:
             try:
                 os.makedirs("out")
@@ -113,12 +113,12 @@ def handle_input(search, info, repo, per_page):
             print("DONE WITH DOWNLOADS!")
         else:
             for src in src_filters:
-                print(src["source"] + "[repo_id:" + str(src["id"]) + "]" + " with a total of " + str(src["count"])
-                      + " result(s).")
+                print("{0}[repo_id: {1}] with a total of {2} restult(s)."
+                      .format(src["source"], src["id"], src["count"]))
                 if src["count"] > (50 * per_page):
                     print("WARNING:The searchcode API only allows the download from up to 50 pages!")
-                    print("\tSo this script will only be able to get " + str(50 * per_page) + " of the "
-                          + str(src["count"]) + " files!")
+                    print("\tSo this script will only be able to get {0} of the {1} files!"
+                          .format(50 * per_page, src["count"]))
     except HTTPError as e:
         print("ERROR:Could not get data from {0}: {1}".format(url, repr(e)))
 

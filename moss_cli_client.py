@@ -1,5 +1,4 @@
 import argparse
-from urllib.request import urlopen
 import mosspy
 import os
 import logging
@@ -27,7 +26,8 @@ def handle_input(user_id, base_folder):
 
                 prog = int(((count + 1) * bar_len) // total)
                 bar = '#' * prog + '.' * (bar_len - prog)
-                print("\t{0}% [{1}] submitting java files from folder {2}/{3}".format(int((prog / bar_len) * 100), bar, count + 1, total),
+                print("\t{0}% [{1}] submitting java files from folder {2}/{3}".format(int((prog / bar_len) * 100), bar,
+                                                                                      count + 1, total),
                       end='\r')
 
                 if os.path.isdir(curr_dir):
@@ -58,7 +58,7 @@ def handle_input(user_id, base_folder):
 
     report_index.append("</body></html>")
     report_path = os.path.join(base_folder, "links_to_reports.html")
-    print("Creating report linking file {0}...".format(report_path))
+    print("Creating report linking file {0}...c".format(report_path))
     with open(report_path, mode='w', encoding='utf-8') as ofile:
         for line in report_index:
             ofile.write("{0}\n".format(line))
