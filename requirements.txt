@@ -1,2 +1,2 @@
-easy_install Py-StackExchange
+pip install py-stackexchange
 pip install mosspy
