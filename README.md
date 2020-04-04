@@ -1,4 +1,4 @@
-# Py-SCSE-search-and-compare
+# Py-SCSO-Compare
 
 ## dsc_cli.py
 ```
