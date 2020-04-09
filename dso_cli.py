@@ -81,6 +81,14 @@ def get_best_answer(question):
     return None
 
 
+def get_all_answers(question):
+    answers = question.answers
+    if len(answers) > 0:
+        return answers
+    else:
+        return None
+
+
 def save_snippet_to_file(snippet, output_file, verbose=False):
     if verbose:
         print(output_file)
@@ -89,10 +97,7 @@ def save_snippet_to_file(snippet, output_file, verbose=False):
 
 
 def save_snippets(snippets, output_file, filename="snippet", e_id=-1, verbose=False):
-    if len(snippets) == 1:
-        save_snippet_to_file(snippets, output_file, verbose)
-        return 0
-    elif len(snippets) > 1:
+    if len(snippets) >= 1:
         folder = output_file.split('.')[0]
         os.makedirs(folder, exist_ok=True)
         i = 1
@@ -197,7 +202,7 @@ def chunks(a_list, n):
         yield a_list[i:i + n]
 
 
-def save_as_snippets(snippets, so_items, nid, direct_link=True, verbose=False):
+def save_as_snippets(snippets, so_items, nid, direct_link=True, aid=-1, verbose=False, copy=True):
     downloaded = 0
     saved = 0
     no_snippets = 0
@@ -207,20 +212,23 @@ def save_as_snippets(snippets, so_items, nid, direct_link=True, verbose=False):
             if nid == so_item.so_id:
                 for dest in so_item.dest:
                     for src in so_item.src:
-                        try:
-                            copyfile(src, dest)
-                        except FileNotFoundError:
-                            os.makedirs(os.path.dirname(dest), exist_ok=True)
-                            copyfile(src, dest)
-                        if verbose:
-                            print("cp: {0} -> {1}".format(src, dest))
+                        if copy:
+                            try:
+                                copyfile(src, dest)
+                            except FileNotFoundError:
+                                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                                copyfile(src, dest)
+                            if verbose:
+                                print("cp: {0} -> {1}".format(src, dest))
                     if direct_link:
-                        filename = "a{0}.java".format(nid)
+                        path = os.path.join(os.path.dirname(dest), "a{0}.java".format(nid))
+                        filename = "snippet"
                     else:
-                        filename = "a_from_q{0}.java".format(nid)
+                        path = os.path.join(os.path.dirname(dest), "a_from_q{0}.java".format(nid))
+                        filename = "a{0}".format(aid)
                     res = save_snippets(snippets,
-                                        os.path.join(os.path.dirname(dest), filename),
-                                        verbose=verbose)
+                                        path,
+                                        filename=filename, verbose=verbose)
                     if res == 0:
                         saved = saved + len(snippets)
     else:
@@ -228,7 +236,7 @@ def save_as_snippets(snippets, so_items, nid, direct_link=True, verbose=False):
     return {"downloaded": downloaded, "saved": saved, "no_snippets": no_snippets}
 
 
-def save_qs_snippets(snippets, so_items, nid, verbose=False):
+def save_qs_snippets(snippets, so_items, nid, verbose=False, copy=True):
     downloaded = 0
     saved = 0
     no_snippets = 0
@@ -238,13 +246,14 @@ def save_qs_snippets(snippets, so_items, nid, verbose=False):
             if nid == so_item.so_id:
                 for dest in so_item.dest:
                     for src in so_item.src:
-                        try:
-                            copyfile(src, dest)
-                        except FileNotFoundError:
-                            os.makedirs(os.path.dirname(dest), exist_ok=True)
-                            copyfile(src, dest)
-                        if verbose:
-                            print("cp: {0} -> {1}".format(src, dest))
+                        if copy:
+                            try:
+                                copyfile(src, dest)
+                            except FileNotFoundError:
+                                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                                copyfile(src, dest)
+                            if verbose:
+                                print("cp: {0} -> {1}".format(src, dest))
                     res = save_snippets(snippets,
                                         os.path.join(os.path.dirname(dest), "q{0}.java".format(nid)),
                                         verbose=verbose)
@@ -305,6 +314,16 @@ def get_qs_snippets(so, so_data, accepted=False, best=False, verbose=False):
                 downloaded = downloaded + result["downloaded"]
                 saved = saved + result["saved"]
                 no_snippets = no_snippets + result["no_snippets"]
+
+                answers = get_all_answers(q)
+                if answers is not None:
+                    for a in answers:
+                        snippets = extract_snippets(a.body)
+                        result = save_as_snippets(snippets, chunk, q.id, direct_link=False, verbose=verbose,
+                                                  aid=a.id)
+                        downloaded = downloaded + result["downloaded"]
+                        saved = saved + result["saved"]
+                        no_snippets = no_snippets + result["no_snippets"]
     return {"downloaded": downloaded, "saved": saved, "no_snippets": no_snippets}
 
 
