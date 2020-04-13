@@ -1,119 +1,38 @@
-import os
 import argparse
+import os
 
+from extract_line_from_files.core import scan_dirs, scan_file
 
-def search_file(filename, query, copy=False):
-    found = []
-    with open(filename, 'r', encoding="utf-8") as ifile:
-        if copy:
-            line = ifile.readline().replace("//", "", 1)
-            found.append(line.strip())
-        for line in ifile:
-            i = line.find(query)
-            if i is not -1:
-                line = line[i:]
-                chars = ":;,()\"{}<>"
-                tags = ["</a>", "<br/>", "<br>", "</pre>", "<pre>"]
-                for tag in tags:
-                    line = line.replace(tag, "")
-                for char in chars:
-                    line = line.replace(char, "")
-                line = line.strip()
-                j = line.find(" ")
-                if j is not -1:
-                    line = line[:j]
-                found.append(line)
-    return found
-
-
-def scan_file(file, query, copy=False, out="", verbose=False):
-    if len(out) == 0:
-        if copy:
-            print("SC_Filepath,\"First Line\",\"Found Line\"")
-        else:
-            print("SC_Filepath,\"Found Line\"")
-        result = search_file(file, query, copy)
-        if len(result) > 0:
-            if copy:
-                for res in result[1:]:
-                    print(file + "," + result[0] + "," + "\""
-                          + res + "\"")
-            else:
-                for res in result:
-                    print(file + "," + "\"" + res + "\"")
-    else:
-        with open(out, 'w', encoding="utf-8") as ofile:
-            if verbose:
-                print("scan: {0}".format(os.path.join(file)))
-            if copy:
-                ofile.write("SC_Filepath,\"First Line\",\"Found Line\"\n")
-            else:
-                ofile.write("SC_Filepath,\"Found Line\"\n")
-            result = search_file(file, query, copy)
-            if len(result) > 0:
-                if copy:
-                    for res in result[1:]:
-                        ofile.write(file + "," + result[0] + "," + "\"" + res + "\"\n")
-                else:
-                    for res in result:
-                        ofile.write(file + "," + "\"" + res + "\"\n")
-
-
-def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
-    if len(out) == 0:
-        if copy:
-            print("SC_Filepath,\"First Line\",\"Found Line\"")
-        else:
-            print("SC_Filepath,\"Found Line\"")
-        for subdir, dir, files in os.walk(rootdir):
-            for file in files:
-                result = search_file(os.path.join(subdir, file), query, copy)
-                if len(result) > 0:
-                    if copy:
-                        for res in result[1:]:
-                            print(os.path.join(subdir, file) + "," + result[0] + "," + "\""
-                                  + res + "\"")
-                    else:
-                        for res in result:
-                            print(os.path.join(subdir, file) + "," + "\"" + res + "\"")
-    else:
-        with open(out, 'w', encoding="utf-8") as ofile:
-            if copy:
-                ofile.write("SC_Filepath,\"First Line\",\"Found Line\"\n")
-            else:
-                ofile.write("SC_Filepath,\"Found Line\"\n")
-            for subdir, dir, files in os.walk(rootdir):
-                for file in files:
-                    if verbose:
-                        print("scan: {0}".format(os.path.join(subdir, file)))
-                    delimeter = ','
-                    result = search_file(os.path.join(subdir, file), query, copy)
-                    if len(result) > 0:
-                        if copy:
-                            for res in result[1:]:
-                                ofile.write(os.path.join(subdir, file) + "," + result[0] + "," + "\"" + res + "\"\n")
-                        else:
-                            for res in result:
-                                ofile.write(os.path.join(subdir, file) + "," + "\"" + res + "\"\n")
+data_folder = 'data'
 
 
 def handle_input(file, query, copyline, outfile, verbose):
-    if args.recursive:
-        scan_dirs(file, query, copyline, outfile, verbose)
+    global data_folder
+    if outfile:
+        dirname = os.path.dirname(__file__)
+        root_data_folder = os.path.join(dirname, data_folder)
+        if not os.path.exists(root_data_folder):
+            os.makedirs(root_data_folder)
+        csv_filename = os.path.join(root_data_folder, 'extracted_data.csv')
     else:
-        scan_file(file, query, copyline, outfile, verbose)
+        csv_filename = ""
+    if args.recursive:
+        scan_dirs(file, query, copyline, csv_filename, verbose)
+    else:
+        scan_file(file, query, copyline, csv_filename, verbose)
 
 
 parser = argparse.ArgumentParser(
-    description="Scans Java files for a given query and returns the lines containing said query starting "
-                + "from the first occurrence.")
+    description="Scans Java files for a StackOverflow links and returns those in a csv sanitized as much as possible.")
 parser.add_argument('file', metavar='F', nargs=1, help="file to be scanned.")
-parser.add_argument('query', metavar='Q', nargs=1, help="the searchquery.")
 parser.add_argument('-r', '--recursive', action='store_true', help="scan a directory recursively.")
-parser.add_argument('-o', '--output-file', nargs=1, default=[""], help="save output in given output file.")
+parser.add_argument('-o', '--output-file', action='store_true',
+                    help="save output in csv file found in data/extracted_data.csv.")
 parser.add_argument('-c', '--copy-line', action='store_true',
-                    help="copy first line of the scanned file(s), removing comment characters like \"//\"")
+                    help="copy first line of the scanned file(s), removing comment characters like \"//\". This works "
+                         "in tandem with dsc_cli.py which writes the link to the raw file in the first line with a "
+                         "preceding \"//\".")
 parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
 args = parser.parse_args()
-handle_input(args.file[0], args.query[0], args.copy_line, args.output_file[0], args.verbose)
+handle_input(args.file[0], "stackoverflow.com", args.copy_line, args.output_file, args.verbose)

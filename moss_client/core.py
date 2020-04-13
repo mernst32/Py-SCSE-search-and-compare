@@ -1,105 +1,10 @@
-import argparse
 import csv
-from urllib.error import URLError
-from urllib.request import urlopen
 import mosspy
 import os
 import time
-import threading
-import queue
 from bs4 import BeautifulSoup
 
-lock = threading.Lock()
-report_links_file = r'links_to_reports.html'
-report_csv_file = r'moss_report.csv'
-
-
-def dl_worker(q, base_url, dest_path, traversed):
-    while True:
-        url = q.get()
-        if url is None:
-            break
-        try:
-            response = urlopen(url)
-        except URLError:
-            time.sleep(60)
-            q.put(url)
-            q.task_done()
-            break
-        with lock:
-            traversed.append(url)
-        basename = os.path.basename(url)
-        html = response.read()
-        soup = BeautifulSoup(html, 'lxml')
-        children = soup.find_all('frame')
-        edges = []
-        for child in children:
-            if child.has_attr('src'):
-                edge = child.get('src')
-                if edge.find("match") != -1:
-                    child['src'] = os.path.basename(edge)
-                    if edge == child['src']:
-                        edge = base_url + edge
-                    if edge not in edges:
-                        with lock:
-                            if edge not in traversed:
-                                edges.append(edge)
-        with open(os.path.join(dest_path, basename), mode='wb') as ofile:
-            ofile.write(soup.encode(soup.original_encoding))
-        for edge in edges:
-            q.put(edge)
-        q.task_done()
-
-
-def dl_report(report_url, dest_path, max_connections=4):
-    if len(report_url) == 0:
-        raise Exception("Empty url supplied")
-
-    if not os.path.exists(dest_path):
-        os.makedirs(dest_path)
-
-    base_url = "{0}/".format(report_url)
-    try:
-        response = urlopen(report_url)
-    except URLError as e:
-        print("\r\nURLError: {0}!".format(e))
-        print("Trying again in 60 seconds!", end='\r')
-        time.sleep(60)
-        response = urlopen(report_url)
-    html = response.read()
-    soup = BeautifulSoup(html, 'lxml')
-
-    children = soup.find_all('a')
-    edges = []
-    traversed = []
-    for child in children:
-        if child.has_attr('href'):
-            edge = child.get('href')
-            if edge.find("match") != -1:
-                child['href'] = os.path.basename(edge)
-                if edge == child['href']:
-                    edge = base_url + edge
-                if edge not in edges:
-                    edges.append(edge)
-
-    traversed.append(report_url)
-    url_queue = queue.Queue()
-    threads = []
-    num_of_threads = min(max_connections, len(edges))
-    for i in range(num_of_threads):
-        worker = threading.Thread(target=dl_worker, args=[url_queue, base_url, dest_path, traversed])
-        worker.setDaemon(True)
-        worker.start()
-        threads.append(worker)
-    for edge in edges:
-        url_queue.put(edge)
-    with open(os.path.join(dest_path, "index.html"), mode='wb') as ofile:
-        ofile.write(soup.encode(soup.original_encoding))
-    url_queue.join()
-    for i in range(num_of_threads):
-        url_queue.put(None)
-    for t in threads:
-        t.join()
+from moss_client.dl_helper import dl_report
 
 
 def parse_reports_into_dict(paths):
@@ -148,9 +53,7 @@ def parse_reports_into_dict(paths):
     return rows
 
 
-def join_parsed_data_with(parsed_data, join_file):
-    global report_links_file
-    global report_csv_file
+def join_parsed_data_with(parsed_data, join_file, report_csv_file):
     if len(parsed_data) > 0:
         basic_keys = list(parsed_data[0].keys())
         print("Joining parsed data with file {0} and writing the result into file {1}..."
@@ -209,9 +112,7 @@ def join_parsed_data_with(parsed_data, join_file):
             csv_writer.writerows(joined_csv)
 
 
-def parse_moss_reports(join_file):
-    global report_links_file
-    global report_csv_file
+def parse_moss_reports(report_links_file, report_csv_file, join_file):
     links = []
     print("Getting paths to reports from file {0}...".format(report_links_file))
     with open(report_links_file, mode='r', encoding='utf-8') as html:
@@ -231,7 +132,7 @@ def parse_moss_reports(join_file):
                 csv_writer.writeheader()
                 csv_writer.writerows(parsed_data)
         else:
-            join_parsed_data_with(parsed_data, join_file)
+            join_parsed_data_with(parsed_data, join_file, report_csv_file)
 
 
 def submit_files(user_id, base_folder):
@@ -276,11 +177,13 @@ def submit_files(user_id, base_folder):
                         print("\r\nConnectionError: {0}!".format(e))
                         print("Trying again in 60 seconds!", end='\r')
                         time.sleep(60)
+                        print("Trying again now!" + (' ' * 10), end='\r')
                         url = m.send()
                     except TimeoutError as e:
                         print("\r\nTimeoutError: {0}!".format(e))
                         print("Trying again in 60 seconds!", end='\r')
                         time.sleep(60)
+                        print("Trying again now!" + (' ' * 10), end='\r')
                         url = m.send()
                     if len(url) > 0:
                         urls.append(url)
@@ -297,8 +200,9 @@ def submit_files(user_id, base_folder):
     return urls, local_paths
 
 
-def submit_and_dl(user_id, base_folder):
+def submit_and_dl(user_id, base_folder, report_links_file):
     urls, local_paths = submit_files(user_id, base_folder)
+
     report_index = ["<html><head><title>Report Index</title></head>\n\t<body><h1>Report Index</h1><br>"]
     total = len(urls)
     bar_len = 50
@@ -326,38 +230,3 @@ def submit_and_dl(user_id, base_folder):
     with open(report_links_file, mode='w', encoding='utf-8') as ofile:
         for line in report_index:
             ofile.write("{0}\n".format(line))
-
-
-def handle_input(user_id, base_folder, parse, only_parse, join_file):
-    global report_links_file
-    global report_csv_file
-    if len(join_file) > 0:
-        expected_keys = ["SC_Filepath", "Stackoverflow_Links"]
-        with open(join_file, mode='r', encoding='utf-8') as csv_file:
-            csv_reader = csv.DictReader(csv_file)
-            actual_keys = csv_reader.fieldnames
-            if expected_keys[0] != actual_keys[0] or expected_keys[1] != actual_keys[1]:
-                print("Error: Unexpected Headers! SC_Filepath and Stackoverflow_Links are required!")
-                return -1
-    if not only_parse:
-        submit_and_dl(user_id, base_folder)
-    if parse or only_parse:
-        print("Parsing the moss reports...")
-        parse_moss_reports(join_file)
-
-
-parser = argparse.ArgumentParser(
-    description="MOSS CLI client for submitting java files to the service and downloading the report from the service "
-                "locally. Will go through the sub folders of the given folder and submit the java files for plagiarism "
-                "checks and download the reports locally, creating a linking file in the process")
-parser.add_argument('user_id', metavar='U', nargs=1, help="Your user-id for the MOSS service.")
-parser.add_argument('folder', metavar='F', nargs=1, help="The folder whose contents you want to submit.")
-parser.add_argument('-p', '--parse', action='store_true', help="Parses the moss reports into a csv file.")
-parser.add_argument('-o', '--only-parse', action='store_true', help="Only parses the local moss reports and does not "
-                                                                    "submit files and download the reports. Requires "
-                                                                    "the reports and the links_to_reports html file "
-                                                                    "created normally by this app.")
-parser.add_argument('-j', '--join-file', nargs=1, default=[""], help="When the parse or only-parse option is given, "
-                                                                     "joins the parsed data with the parsed data.")
-args = parser.parse_args()
-handle_input(args.user_id[0], args.folder[0], args.parse, args.only_parse, args.join_file[0])
