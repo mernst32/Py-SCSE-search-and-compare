@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="Py-SCSO-Compare-mernst32",
+    name="Py-SCSO-Compare",
     version="0.0.1",
     author="Maximilian Ernst",
     author_email="mernst32@yahoo.com",

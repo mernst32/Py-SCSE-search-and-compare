@@ -6,3 +6,6 @@ __pycache__/
 test/
 *.html
 creds.txt
+build/
+dist/
+Py_SCSO_Compare_mernst32.egg-info/

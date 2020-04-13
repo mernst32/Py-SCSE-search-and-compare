@@ -1,5 +1,5 @@
 # Py-SCSO-Compare
-
+This is neither an official Searchcode nor an official Stackoverflow application!
 ## dsc_cli.py
 ```
 usage: dsc_cli.py [-h] [-i] [-r REPO] Q
