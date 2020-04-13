@@ -2,6 +2,14 @@ import os
 
 
 def search_file(filename, query, copy=False):
+    """
+    Searches file for the given query.
+
+    :param filename: the name of the file to be searched
+    :param query: the query to search for
+    :param copy: whether the first line of the file should be added to the found lines
+    :return: a list of the found lines, after being sanitized
+    """
     found = []
     with open(filename, 'r', encoding="utf-8") as ifile:
         if copy:
@@ -26,6 +34,15 @@ def search_file(filename, query, copy=False):
 
 
 def scan_file(file, query, copy=False, out="", verbose=False):
+    """
+    Scans one file for the given query and save the found lines.
+
+    :param file: the file to be scanned
+    :param query: then query to be searched for
+    :param copy: whether the first line of the file should be added
+    :param out: Where to save the gotten lines
+    :param verbose: print more data
+    """
     if len(out) == 0:
         if copy:
             print("SC_Filepath,\"First Line\",Stackoverflow_Links")
@@ -59,6 +76,16 @@ def scan_file(file, query, copy=False, out="", verbose=False):
 
 
 def scan_dirs(rootdir, query, copy=False, out="", verbose=False):
+    """
+    Scan the files in the qiven rootdir for the query and save the found lines.
+
+    :param rootdir: the dir whose files will be scanned
+    :param query: the query to be searched for
+    :param copy: whether the first line of the files should be copied
+    :param out: where to save the gotten lines
+    :param verbose: print more data
+    :return:
+    """
     if len(out) == 0:
         if copy:
             print("SC_Filepath,\"First Line\",Stackoverflow_Links")
