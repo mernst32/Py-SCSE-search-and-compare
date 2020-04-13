@@ -9,6 +9,12 @@ from download_stackoverflow_codesnippets.so_helper import StackOverflowItem, chu
 
 
 def extract_snippets(body):
+    """
+    Extracts the code snippets from the body of a Stackoverflow Entity
+
+    :param body: the body of stackoverflow entity
+    :return: a string list containing all the snippets that were found in the body
+    """
     body = unescape(body).split('\n')
     snippets = []
     snippet = []
@@ -35,6 +41,13 @@ def extract_snippets(body):
 
 
 def save_snippet_to_file(snippet, output_file, verbose=False):
+    """
+    Save one code snippet into given output file.
+
+    :param snippet: a string containing the code snippet
+    :param output_file: the name of the file to which the snippet will be saved
+    :param verbose: print more data
+    """
     if verbose:
         print(output_file)
     with open(output_file, 'w', encoding='utf-8') as ofile:
@@ -42,6 +55,16 @@ def save_snippet_to_file(snippet, output_file, verbose=False):
 
 
 def save_snippets(snippets, output_file, filename="snippet", e_id=-1, verbose=False):
+    """
+    Save multiple snippets
+
+    :param snippets: a list of strings containing the snippets
+    :param output_file: the folder to which the snippets will be saved
+    :param filename: the filenames for the snippets
+    :param e_id: the id of the stackoverflow entity whose body the snippets are from
+    :param verbose: prints more data
+    :return: if the saving was successful returns 0 otherwise the e_id
+    """
     if len(snippets) >= 1:
         folder = output_file.split('.')[0]
         os.makedirs(folder, exist_ok=True)
@@ -55,6 +78,15 @@ def save_snippets(snippets, output_file, filename="snippet", e_id=-1, verbose=Fa
 
 
 def handle_csv(input_file, output_folder, verbose=False):
+    """
+    Parse the data of a csv for getting code snippets. The csv should at leatst have the headers Stackoverflow_Links and
+    SC_Filepath.
+
+    :param input_file: the filename of the csv
+    :param output_folder: the folder to which the gotten code snippets saved in
+    :param verbose: print more data
+    :return: a dict list containing the stackoverflow items gotten from the csv.
+    """
     so_key = "Stackoverflow_Links"
     dl_key = "Download"
     fp_key = "SC_Filepath"
@@ -144,6 +176,18 @@ def handle_csv(input_file, output_folder, verbose=False):
 
 
 def save_as_snippets(snippets, so_items, nid, direct_link=True, aid=-1, verbose=False, copy=True):
+    """
+    Saves the snippets gotten from answers.
+
+    :param snippets: a list of code snippets
+    :param so_items: a list of stackoverflow entities
+    :param nid: the id of the original entity. Either a question(this downloads snippets from its answers) or an answer
+    :param direct_link: whether the snippets are from the original entity(True) or its answers(False)
+    :param aid: the id of the answer. If it wasn't a direct link
+    :param verbose: print more data
+    :param copy: wheter the original java file should copied as well
+    :return: a dict containg the statistics of the saving process. keys=["downloaded", "saved", "no_snippets"]
+    """
     downloaded = 0
     saved = 0
     no_snippets = 0
@@ -178,6 +222,17 @@ def save_as_snippets(snippets, so_items, nid, direct_link=True, aid=-1, verbose=
 
 
 def save_qs_snippets(snippets, so_items, nid, verbose=False, copy=True):
+    """
+    Saves the snippets gotten from questions.
+
+    :param snippets: a list of code snippets
+    :param so_items: a list of stackoverflow entities
+    :param nid: the id of the question entity
+    :param verbose: print more data
+    :param copy: whether the original java file should copied as well
+    :return: a dict containing the statistics of the saving process. keys=["downloaded", "saved", "no_snippets"]
+    """
+
     downloaded = 0
     saved = 0
     no_snippets = 0
@@ -206,6 +261,14 @@ def save_qs_snippets(snippets, so_items, nid, verbose=False, copy=True):
 
 
 def get_as_snippets(so, so_data, verbose=False):
+    """
+    Get the code snippets from stackoverflow answer entities
+
+    :param so: the connection to the stackoverlflow api
+    :param so_data: a dict containing the answer ids
+    :param verbose: print more data
+    :return: a dict containing the statistics of the saving process. keys=["downloaded", "saved", "no_snippets"]
+    """
     downloaded = 0
     saved = 0
     no_snippets = 0
@@ -226,6 +289,16 @@ def get_as_snippets(so, so_data, verbose=False):
 
 
 def get_qs_snippets(so, so_data, accepted=False, best=False, verbose=False):
+    """
+    Get the code snippets from stackoverflow question entities and its answers
+
+    :param so: the connection to the stackoverlflow api
+    :param so_data: a dict containing the question ids
+    :param accepted: whether only the accepted answer or the best voted one should be saved
+    :param best: whether only the best voted answer should be saved
+    :param verbose: print more data
+    :return: a dict containing the statistics of the saving process. keys=["downloaded", "saved", "no_snippets"]
+    """
     downloaded = 0
     saved = 0
     no_snippets = 0
@@ -269,6 +342,18 @@ def get_qs_snippets(so, so_data, accepted=False, best=False, verbose=False):
 
 
 def get_snippets_from_one_so_entity(so, e_id, question, best, accepted, output_file, verbose=False):
+    """
+    get code snippets from only one stackoverflow answer
+
+    :param so: connection to the stackoverlow api
+    :param e_id: id of the stackoverflow entity
+    :param question: whether the snippets of a question should be downloaded
+    :param best: instead of the question get snippets from the best voted answer
+    :param accepted: instead of the question get the snippets from the accepted answer
+    :param output_file: the name of the file the snippet(s) should be saved to
+    :param verbose: print more data
+    :return: if the saving was a success returns 0. if not this function returns -1.
+    """
     snippets = []
     try:
         e_id = int(e_id)
