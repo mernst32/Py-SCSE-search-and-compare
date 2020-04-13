@@ -8,6 +8,12 @@ from moss_client.dl_helper import dl_report
 
 
 def parse_reports_into_dict(paths):
+    """
+    Parses moss reports into dictionary list
+
+    :param paths: a list of paths pointing to the moss reports
+    :return:  a dict list containing the parsed data from reports to the sc_file(the file to be tested)
+    """
     total = len(paths)
     bar_len = 50
     rows = []
@@ -54,6 +60,12 @@ def parse_reports_into_dict(paths):
 
 
 def join_parsed_data_with(parsed_data, join_file, report_csv_file):
+    """
+    Joins the parsed_data from the moss_reports with the given join_file and saves it into the report_csv_file
+    :param parsed_data: a dict list containing the parsed data from reports to the sc_file(the file to be tested)
+    :param join_file: the name of the csv file to be joined
+    :param report_csv_file: the name of the file into which the joined data will be saved
+    """
     if len(parsed_data) > 0:
         basic_keys = list(parsed_data[0].keys())
         print("Joining parsed data with file {0} and writing the result into file {1}..."
@@ -113,6 +125,14 @@ def join_parsed_data_with(parsed_data, join_file, report_csv_file):
 
 
 def parse_moss_reports(report_links_file, report_csv_file, join_file):
+    """
+    Parses the links to the moss reports master file for the paths to the moss reports. Then parses the moss_reports
+    and saves them into the report_csv_file.
+
+    :param report_links_file: the name of the moss reports master file containing the paths
+    :param report_csv_file: the output file
+    :param join_file: the file to join with the resulting data
+    """
     links = []
     print("Getting paths to reports from file {0}...".format(report_links_file))
     with open(report_links_file, mode='r', encoding='utf-8') as html:
@@ -121,7 +141,9 @@ def parse_moss_reports(report_links_file, report_csv_file, join_file):
         for a_elem in a_elems:
             if a_elem.has_attr('href'):
                 links.append(a_elem['href'])
+
     parsed_data = parse_reports_into_dict(links)
+
     if len(parsed_data) > 0:
         basic_keys = list(parsed_data[0].keys())
         if len(join_file) == 0:
@@ -136,6 +158,14 @@ def parse_moss_reports(report_links_file, report_csv_file, join_file):
 
 
 def submit_files(user_id, base_folder):
+    """
+    Submits the java files in the base_folder to moss.stanford.edu for comparison
+
+    :param user_id: the user_id for the moss service
+    :param base_folder: the folder whose java files need to tested
+    :return: a tuple (urls, local_path). urls is a list of links pointing to the moss reports and local_path is a dict
+       using urls as key and contains the local_path to the submitted folders
+    """
     # get the repo folders
     sub_folders = os.listdir(base_folder)
     urls = []
@@ -201,6 +231,13 @@ def submit_files(user_id, base_folder):
 
 
 def submit_and_dl(user_id, base_folder, report_links_file):
+    """
+    Submit the java file in the base_folder and download the reports. Afterwards create a html file with the locallinks
+    to the reports.
+    :param user_id: the user_id for the moss_service
+    :param base_folder: the folder whose java files will be submitted
+    :param report_links_file: the name of the html filde containging the local links to the moss reports
+    """
     urls, local_paths = submit_files(user_id, base_folder)
 
     report_index = ["<html><head><title>Report Index</title></head>\n\t<body><h1>Report Index</h1><br>"]

@@ -10,6 +10,14 @@ lock = threading.Lock()
 
 
 def dl_worker(q, base_url, dest_path, traversed):
+    """
+    A download worker for the moss report
+
+    :param q: the queue, containing the links to the moss_reports parts
+    :param base_url: the base_url of the moss report
+    :param dest_path: where the html files should be saved to
+    :param traversed: which links were already traversed
+    """
     while True:
         url = q.get()
         if url is None:
@@ -47,6 +55,13 @@ def dl_worker(q, base_url, dest_path, traversed):
 
 
 def dl_report(report_url, dest_path, max_connections=4):
+    """
+    Download a moss report and save it in the dest_path
+
+    :param report_url: the url to the moss report
+    :param dest_path: where to save the html files
+    :param max_connections: how many simultaneous connections should be used at maximum
+    """
     if len(report_url) == 0:
         raise Exception("Empty url supplied")
 
