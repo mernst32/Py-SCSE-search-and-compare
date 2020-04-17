@@ -7,20 +7,22 @@ from bs4 import BeautifulSoup
 from moss_client.dl_helper import dl_report
 
 
-def parse_reports_into_dict(paths):
+def parse_reports_into_dict(paths, src_repo):
     """
     Parses moss reports into dictionary list
 
     :param paths: a list of paths pointing to the moss reports
+    :param src_repo: a dict of the repo where the test files come from, using the paths as key
     :return:  a dict list containing the parsed data from reports to the sc_file(the file to be tested)
     """
     total = len(paths)
     bar_len = 50
     rows = []
-    basic_keys = ['File_1', 'File_2', 'Lines_Matched', 'Code_Similarity']
+    basic_keys = ['File_1', 'File_2', 'Lines_Matched', 'Code_Similarity', 'Src_Repo']
     print("Following the gathered paths to the reports and parsing those...")
     for count, link in enumerate(paths):
 
+        repo_name = src_repo[link]
         prog = int(((count + 1) * bar_len) // total)
         bar = '#' * prog + '.' * (bar_len - prog)
         print("\t{0}% [{1}] parsing report {2}/{3}"
@@ -53,7 +55,8 @@ def parse_reports_into_dict(paths):
                             rows.append({basic_keys[0]: file_1,
                                          basic_keys[1]: file_2,
                                          basic_keys[2]: lines_matched,
-                                         basic_keys[3]: percentage})
+                                         basic_keys[3]: percentage,
+                                         basic_keys[4]: repo_name})
     print("\t{0}% [{1}] {2}/{3} reports parsed"
           .format("100", '#' * bar_len, total, total))
     return rows
@@ -108,6 +111,7 @@ def join_parsed_data_with(parsed_data, join_file, report_csv_file):
                             joined_row[joined_keys[3]] = file_2
                             joined_row[joined_keys[4]] = parsed_row[basic_keys[2]]
                             joined_row[joined_keys[5]] = parsed_row[basic_keys[3]]
+                            joined_row[joined_keys[6]] = parsed_row[basic_keys[4]]
                             break
             if joined_row[joined_keys[0]] is None:
                 joined_row[joined_keys[0]] = og_sc_filepath
@@ -116,6 +120,7 @@ def join_parsed_data_with(parsed_data, join_file, report_csv_file):
                 joined_row[joined_keys[3]] = "None"
                 joined_row[joined_keys[4]] = 0
                 joined_row[joined_keys[5]] = 0.0
+                joined_row[joined_keys[6]] = "None"
             joined_csv.append(joined_row)
 
         with open(report_csv_file, mode='w', encoding='utf-8', newline='') as csv_file:
@@ -134,15 +139,18 @@ def parse_moss_reports(report_links_file, report_csv_file, join_file):
     :param join_file: the file to join with the resulting data
     """
     links = []
+    src_repo = {}
     print("Getting paths to reports from file {0}...".format(report_links_file))
     with open(report_links_file, mode='r', encoding='utf-8') as html:
         soup = BeautifulSoup(html, 'lxml')
         a_elems = soup.find_all('a')
         for a_elem in a_elems:
             if a_elem.has_attr('href'):
-                links.append(a_elem['href'])
+                path = a_elem["href"]
+                src_repo[path] = a_elem.contents[0]
+                links.append(path)
 
-    parsed_data = parse_reports_into_dict(links)
+    parsed_data = parse_reports_into_dict(links, src_repo)
 
     if len(parsed_data) > 0:
         basic_keys = list(parsed_data[0].keys())
@@ -163,13 +171,16 @@ def submit_files(user_id, base_folder):
 
     :param user_id: the user_id for the moss service
     :param base_folder: the folder whose java files need to tested
-    :return: a tuple (urls, local_path). urls is a list of links pointing to the moss reports and local_path is a dict
-       using urls as key and contains the local_path to the submitted folders
+    :return: a triple (urls, local_path, src_repo). urls is a list of links pointing to the moss reports and local_path
+        is a dict using urls as key and contains the local_path to the submitted folders. Whereas src_repo is a dict
+        containing the names of the repositories from where the files comes from.
     """
     # get the repo folders
+
     sub_folders = os.listdir(base_folder)
     urls = []
     local_paths = {}
+    src_repo = {}
     no_resp = []
     for sub_folder in sub_folders:
         curr_dir = os.path.join(base_folder, sub_folder)
@@ -179,7 +190,8 @@ def submit_files(user_id, base_folder):
             sub_sub_folders = os.listdir(curr_dir)
             total = len(sub_sub_folders)
             bar_len = 50
-            print("{0} has {1} folders to submit.".format(curr_dir, total))
+            repo = os.path.basename(curr_dir)
+            print("{0} has {1} folders to submit.".format(repo, total))
             print("Waiting 5 Seconds before going through the folder...", end='\r')
             time.sleep(5)
             for count, sub_sub_folder in enumerate(sub_sub_folders):
@@ -218,6 +230,7 @@ def submit_files(user_id, base_folder):
                     if len(url) > 0:
                         urls.append(url)
                         local_paths[url] = curr_dir
+                        src_repo[url] = repo
                     else:
                         no_resp.append(curr_dir)
                     time.sleep(.1)
@@ -227,7 +240,7 @@ def submit_files(user_id, base_folder):
         print("Got no report for {0} submissions:".format(len(no_resp)))
         for item in no_resp:
             print("\t{0}".format(item))
-    return urls, local_paths
+    return urls, local_paths, src_repo
 
 
 def submit_and_dl(user_id, base_folder, report_links_file):
@@ -238,7 +251,7 @@ def submit_and_dl(user_id, base_folder, report_links_file):
     :param base_folder: the folder whose java files will be submitted
     :param report_links_file: the name of the html filde containging the local links to the moss reports
     """
-    urls, local_paths = submit_files(user_id, base_folder)
+    urls, local_paths, src_repo = submit_files(user_id, base_folder)
 
     report_index = ["<html><head><title>Report Index</title></head>\n\t<body><h1>Report Index</h1><br>"]
     total = len(urls)
@@ -248,6 +261,7 @@ def submit_and_dl(user_id, base_folder, report_links_file):
     print("\nStarting download of the {0} reports...".format(total))
     for count, url in enumerate(urls):
         curr_dir = local_paths[url]
+        repo = src_repo[url]
 
         prog = int(((count + 1) * bar_len) // total)
         bar = '#' * prog + '.' * (bar_len - prog)
@@ -256,8 +270,8 @@ def submit_and_dl(user_id, base_folder, report_links_file):
 
         # Download whole report locally including code diff links
         dl_report(url, os.path.join(curr_dir, "report"), max_connections=16)
-        report_index.append("\t<a href=\"{0}\">{0}</a><br>".format(
-            os.path.join(curr_dir, "report", "index.html")))
+        report_index.append("\t<a href=\"{0}\">{0}: {1}</a><br>"
+                            .format(repo, os.path.join(curr_dir, "report", "index.html")))
         time.sleep(.1)
     print("\t{0}% [{1}] {2}/{3} reports downloaded".format("100", '#' * bar_len, total, total))
 

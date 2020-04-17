@@ -8,12 +8,14 @@ data_folder = 'data'
 
 def handle_input(user_id, base_folder, parse, only_parse, join_file):
     global data_folder
-    dirname = os.path.dirname(__file__)
-    root_data_folder = os.path.join(dirname, data_folder)
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    root_data_folder = os.path.join(abs_path, data_folder)
     if not os.path.exists(root_data_folder):
         os.makedirs(root_data_folder)
     report_links_file = os.path.join(root_data_folder, 'links_to_moss_reports.html')
     report_csv_file = os.path.join(root_data_folder, 'moss_report.csv')
+    if not os.path.isabs(base_folder):
+        base_folder = os.path.join(abs_path, base_folder)
 
     if len(join_file) > 0:
         expected_keys = ["SC_Filepath", "Stackoverflow_Links"]
