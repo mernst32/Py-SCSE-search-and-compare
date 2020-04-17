@@ -147,7 +147,7 @@ def parse_moss_reports(report_links_file, report_csv_file, join_file):
         for a_elem in a_elems:
             if a_elem.has_attr('href'):
                 path = a_elem["href"]
-                src_repo[path] = a_elem.contents[0]
+                src_repo[path] = str(a_elem.contents[0]).split('from')[1].strip()
                 links.append(path)
 
     parsed_data = parse_reports_into_dict(links, src_repo)
@@ -270,8 +270,8 @@ def submit_and_dl(user_id, base_folder, report_links_file):
 
         # Download whole report locally including code diff links
         dl_report(url, os.path.join(curr_dir, "report"), max_connections=16)
-        report_index.append("\t<a href=\"{0}\">{0}: {1}</a><br>"
-                            .format(repo, os.path.join(curr_dir, "report", "index.html")))
+        report_index.append("\t<a href=\"{0}\">{0} from {1}</a><br>"
+                            .format(os.path.join(curr_dir, "report", "index.html"), repo))
         time.sleep(.1)
     print("\t{0}% [{1}] {2}/{3} reports downloaded".format("100", '#' * bar_len, total, total))
 
