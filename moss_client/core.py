@@ -184,6 +184,7 @@ def submit_files(user_id, base_folder, batch):
     src_repo = {}
     no_resp = []
     total_submitted = 0
+    already_submitted = 0
     for sub_folder in sub_folders:
         curr_dir = os.path.join(base_folder, sub_folder)
         if os.path.isdir(curr_dir):
@@ -196,7 +197,6 @@ def submit_files(user_id, base_folder, batch):
             print("{0} has {1} folders to submit.".format(repo, total))
             print("Waiting 5 Seconds before going through the folder...", end='\r')
             time.sleep(5)
-            already_submitted = 0
             for count, sub_sub_folder in enumerate(sub_sub_folders):
                 curr_dir = os.path.join(base_folder, sub_folder, sub_sub_folder)
 
@@ -208,6 +208,10 @@ def submit_files(user_id, base_folder, batch):
 
                 if os.path.isdir(curr_dir):
                     if "report" in os.listdir(curr_dir):
+                        url = "local_{0}".format(already_submitted)
+                        urls.append(url)
+                        local_paths[url] = curr_dir
+                        src_repo[url] = repo
                         already_submitted = already_submitted + 1
                         continue
                     if batch:
@@ -243,15 +247,16 @@ def submit_files(user_id, base_folder, batch):
                         src_repo[url] = repo
                     else:
                         no_resp.append(curr_dir)
-                    total_submitted = total_submitted + 1
                     time.sleep(.1)
+                    total_submitted = total_submitted + 1
             print("\t{0}% [{1}] {2}/{3} folders have been parsed"
                   .format("100", '#' * bar_len, total, total))
-            print("{0} folders have already been submitted!".format(already_submitted))
     if len(no_resp) > 0:
         print("Got no report for {0} submissions:".format(len(no_resp)))
         for item in no_resp:
             print("\t{0}".format(item))
+    print("Submitted {0} folders!".format(total_submitted))
+    print("{0} folders have already been submitted!".format(already_submitted))
     return urls, local_paths, src_repo
 
 
@@ -269,41 +274,30 @@ def submit_and_dl(user_id, base_folder, report_links_file, batch):
     report_index = ["<html><head><title>Report Index</title></head>\n\t<body><h1>Report Index</h1><br>"]
     total = len(urls)
     bar_len = 50
-    print("Finished submitting, waiting 5 Seconds before downloading the {0} reports...".format(total), end='\r')
+    print("Finished submitting, waiting 5 Seconds before parsing the {0} reports...".format(total), end='\r')
     time.sleep(5)
-    print("\nStarting download of the {0} reports...".format(total))
+    print("\nStarting download/parsing of the {0} reports...".format(total))
     for count, url in enumerate(urls):
         curr_dir = local_paths[url]
         repo = src_repo[url]
 
         prog = int(((count + 1) * bar_len) // total)
         bar = '#' * prog + '.' * (bar_len - prog)
-        print("\t{0}% [{1}] downloading report {2}/{3}".format(int((prog / bar_len) * 100), bar, count + 1, total),
+        print("\t{0}% [{1}] downloading/parsing report {2}/{3}".format(int((prog / bar_len) * 100), bar, count + 1, total),
               end='\r')
 
         # Download whole report locally including code diff links
-        dl_report(url, os.path.join(curr_dir, "report"), max_connections=16)
+        if "local_" not in url:
+            dl_report(url, os.path.join(curr_dir, "report"), max_connections=16)
         report_index.append("\t<a href=\"{0}\">{0} from {1}</a><br>"
                             .format(os.path.join(curr_dir, "report", "index.html"), repo))
         time.sleep(.1)
-    print("\t{0}% [{1}] {2}/{3} reports downloaded".format("100", '#' * bar_len, total, total))
+    print("\t{0}% [{1}] {2}/{3} reports downloaded/parsed".format("100", '#' * bar_len, total, total))
 
     # save links to the reports in one file
     report_index.append("</body></html>")
-    if not batch:
-        print("Creating report linking file {0}...".format(report_links_file))
-        with open(report_links_file, mode='w', encoding='utf-8') as ofile:
-            for line in report_index:
-                ofile.write("{0}\n".format(line))
-    else:
-        print("Appending to report linking file {0}...".format(report_links_file))
-        new_file = []
-        with open(report_links_file, mode='r', encoding='utf-8') as ofile:
-            for line in ofile:
-                new_file.append(line)
-            new_file = new_file[:-1]
-            for line in report_index[1:]:
-                new_file.append(line)
-        with open(report_links_file, mode='w', encoding='utf-8') as ofile:
-            for line in new_file:
-                ofile.write("{0}\n".format(line))
+
+    print("Creating report linking file {0}...".format(report_links_file))
+    with open(report_links_file, mode='w', encoding='utf-8') as ofile:
+        for line in report_index:
+            ofile.write("{0}\n".format(line))
