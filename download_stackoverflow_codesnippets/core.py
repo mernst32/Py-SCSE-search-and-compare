@@ -116,6 +116,9 @@ def handle_csv(input_file, output_folder, verbose=False):
                 if row[dl_key] != "TRUE":
                     line_count = line_count + 1
                     continue
+            if len(row[so_key]) == 0:
+                line_count = line_count + 1
+                continue
             so_link = row[so_key].split('/')
             so_item = {"type": ""}
             try:
