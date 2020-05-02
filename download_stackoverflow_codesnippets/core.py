@@ -306,12 +306,12 @@ def get_qs_snippets(so, so_data, accepted=False, best=False, verbose=False):
     saved = 0
     no_snippets = 0
     for count, chunk in enumerate(list(chunks(so_data["questions"], 100))):
-        if count % 20:
-            time.sleep(1)
         q_ids = []
         for so_item in chunk:
             q_ids.append(so_item.so_id)
         questions = so.questions(q_ids, pagesize=100)
+        # wait for questions to load
+        time.sleep(1)
         for q in questions:
             if accepted or best:
                 a = None

@@ -37,6 +37,7 @@ def handle_input(e_id, question, best, accepted, input_file, output_file, verbos
             so = stackexchange.Site(stackexchange.StackOverflow, impose_throttling=True)
             so.app_key = "SUMnKKZdqXNa64OXduEySg(("
             so.include_body = True
+            so.be_inclusive()
 
             result = get_snippets_from_one_so_entity(so, e_id, question, best, accepted, output_file, verbose)
             if result == 0:
