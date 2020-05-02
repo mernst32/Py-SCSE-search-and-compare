@@ -6,7 +6,7 @@ from moss_client.core import submit_and_dl, parse_moss_reports
 data_folder = 'data'
 
 
-def handle_input(user_id, base_folder, parse, only_parse, join_file):
+def handle_input(user_id, base_folder, parse, only_parse, join_file, batch):
     global data_folder
     abs_path = os.path.abspath(os.path.dirname(__file__))
     root_data_folder = os.path.join(abs_path, data_folder)
@@ -26,7 +26,7 @@ def handle_input(user_id, base_folder, parse, only_parse, join_file):
                 print("Error: Unexpected Headers! SC_Filepath and Stackoverflow_Links are required!")
                 return -1
     if not only_parse:
-        submit_and_dl(user_id, base_folder, report_links_file)
+        submit_and_dl(user_id, base_folder, report_links_file, batch)
     if parse or only_parse:
         print("Parsing the moss reports...")
         parse_moss_reports(report_links_file, report_csv_file, join_file)
@@ -44,5 +44,8 @@ parser.add_argument('-o', '--only-parse', action='store_true',
                          "Requires the reports and the links_to_reports html file created normally by this app.")
 parser.add_argument('-j', '--join-file', nargs=1, default=[""],
                     help="When the parse or only-parse option is given, joins the parsed data with the parsed data.")
+parser.add_argument('-b', '--batch-mode', action='store_true',
+                    help="Only submits a 100 folders to the Moss Service, also looks for already processed folders so "
+                         "that it does not submit those again.")
 args = parser.parse_args()
-handle_input(args.user_id[0], args.folder[0], args.parse, args.only_parse, args.join_file[0])
+handle_input(args.user_id[0], args.folder[0], args.parse, args.only_parse, args.join_file[0], args.batch_mode)

@@ -165,12 +165,13 @@ def parse_moss_reports(report_links_file, report_csv_file, join_file):
             join_parsed_data_with(parsed_data, join_file, report_csv_file)
 
 
-def submit_files(user_id, base_folder):
+def submit_files(user_id, base_folder, batch):
     """
     Submits the java files in the base_folder to moss.stanford.edu for comparison
 
     :param user_id: the user_id for the moss service
     :param base_folder: the folder whose java files need to tested
+    :param batch: whether the submitting should be done in batches of only 100, also ignores already submitted folders
     :return: a triple (urls, local_path, src_repo). urls is a list of links pointing to the moss reports and local_path
         is a dict using urls as key and contains the local_path to the submitted folders. Whereas src_repo is a dict
         containing the names of the repositories from where the files comes from.
@@ -182,7 +183,12 @@ def submit_files(user_id, base_folder):
     local_paths = {}
     src_repo = {}
     no_resp = []
+    already_submitted = 0
+    total_submitted = 0
     for sub_folder in sub_folders:
+        if batch:
+            if total_submitted >= 100:
+                break
         curr_dir = os.path.join(base_folder, sub_folder)
         if os.path.isdir(curr_dir):
 
@@ -204,6 +210,9 @@ def submit_files(user_id, base_folder):
                       end='\r')
 
                 if os.path.isdir(curr_dir):
+                    if "report" in os.listdir(curr_dir):
+                        already_submitted = already_submitted + 1
+                        continue
                     m = mosspy.Moss(user_id, "java")
 
                     # Adds all java files in the current directory as well as its subdirectories
@@ -233,9 +242,11 @@ def submit_files(user_id, base_folder):
                         src_repo[url] = repo
                     else:
                         no_resp.append(curr_dir)
+                    total_subs = total_subs + 1
                     time.sleep(.1)
             print("\t{0}% [{1}] {2}/{3} folders submitted"
                   .format("100", '#' * bar_len, total, total))
+            print("{0} folders have already been submitted!".format(already_submitted))
     if len(no_resp) > 0:
         print("Got no report for {0} submissions:".format(len(no_resp)))
         for item in no_resp:
@@ -243,15 +254,16 @@ def submit_files(user_id, base_folder):
     return urls, local_paths, src_repo
 
 
-def submit_and_dl(user_id, base_folder, report_links_file):
+def submit_and_dl(user_id, base_folder, report_links_file, batch):
     """
     Submit the java file in the base_folder and download the reports. Afterwards create a html file with the locallinks
     to the reports.
     :param user_id: the user_id for the moss_service
     :param base_folder: the folder whose java files will be submitted
-    :param report_links_file: the name of the html filde containging the local links to the moss reports
+    :param report_links_file: the name of the html file containing the local links to the moss reports
+    :param batch: whether the submitting should be done in batches of only 100, also ignores already submitted folders
     """
-    urls, local_paths, src_repo = submit_files(user_id, base_folder)
+    urls, local_paths, src_repo = submit_files(user_id, base_folder, batch)
 
     report_index = ["<html><head><title>Report Index</title></head>\n\t<body><h1>Report Index</h1><br>"]
     total = len(urls)
@@ -277,7 +289,19 @@ def submit_and_dl(user_id, base_folder, report_links_file):
 
     # save links to the reports in one file
     report_index.append("</body></html>")
-    print("Creating report linking file {0}...".format(report_links_file))
-    with open(report_links_file, mode='w', encoding='utf-8') as ofile:
-        for line in report_index:
-            ofile.write("{0}\n".format(line))
+    if not batch:
+        print("Creating report linking file {0}...".format(report_links_file))
+        with open(report_links_file, mode='w', encoding='utf-8') as ofile:
+            for line in report_index:
+                ofile.write("{0}\n".format(line))
+    else:
+        print("Appending to report linking file {0}...".format(report_links_file))
+        new_file = []
+        with open(report_links_file, mode='r', encoding='utf-8') as ofile:
+            for line in ofile[:-1]:
+                new_file.append(line)
+            for line in report_index[1:]:
+                new_file.append(line)
+        with open(report_links_file, mode='w', encoding='utf-8') as ofile:
+            for line in new_file:
+                ofile.write("{0}\n".format(line))
