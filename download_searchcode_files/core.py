@@ -49,11 +49,14 @@ def get_page(search, page, per_page, src, out_folder, err_folder):
     :param err_folder: string: absolute path pointing to the errormsg folder
     :return: the number of downloaded files
     """
-    params = {'q': search, 'lan': '23', 'p': page, 'per_page': per_page, 'src': src["id"]}
+    params = {'q': search, 'per_page': per_page, 'lan': '23', 'src': src["id"], 'page': page}
     url = "https://searchcode.com/api/codesearch_I/?" + urllib.parse.urlencode(params)
     try:
         raw_data = get_raw(url)
         results = raw_data["results"]
+        if results is None:
+            print("Error: Result for the request \'{0}\' was empty!".format(url))
+            return 0
         id_list = []
         for result in results:
             id_list.append(result["id"])
