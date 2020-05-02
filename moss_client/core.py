@@ -183,12 +183,8 @@ def submit_files(user_id, base_folder, batch):
     local_paths = {}
     src_repo = {}
     no_resp = []
-    already_submitted = 0
     total_submitted = 0
     for sub_folder in sub_folders:
-        if batch:
-            if total_submitted >= 100:
-                break
         curr_dir = os.path.join(base_folder, sub_folder)
         if os.path.isdir(curr_dir):
 
@@ -200,12 +196,13 @@ def submit_files(user_id, base_folder, batch):
             print("{0} has {1} folders to submit.".format(repo, total))
             print("Waiting 5 Seconds before going through the folder...", end='\r')
             time.sleep(5)
+            already_submitted = 0
             for count, sub_sub_folder in enumerate(sub_sub_folders):
                 curr_dir = os.path.join(base_folder, sub_folder, sub_sub_folder)
 
                 prog = int(((count + 1) * bar_len) // total)
                 bar = '#' * prog + '.' * (bar_len - prog)
-                print("\t{0}% [{1}] submitting folder {2}/{3}"
+                print("\t{0}% [{1}] parsing folder {2}/{3}"
                       .format(int((prog / bar_len) * 100), bar, count + 1, total),
                       end='\r')
 
@@ -213,6 +210,9 @@ def submit_files(user_id, base_folder, batch):
                     if "report" in os.listdir(curr_dir):
                         already_submitted = already_submitted + 1
                         continue
+                    if batch:
+                        if total_submitted >= 100:
+                            break
                     m = mosspy.Moss(user_id, "java")
 
                     # Adds all java files in the current directory as well as its subdirectories
@@ -242,9 +242,9 @@ def submit_files(user_id, base_folder, batch):
                         src_repo[url] = repo
                     else:
                         no_resp.append(curr_dir)
-                    total_subs = total_subs + 1
+                    total_submitted = total_submitted + 1
                     time.sleep(.1)
-            print("\t{0}% [{1}] {2}/{3} folders submitted"
+            print("\t{0}% [{1}] {2}/{3} folders have been parsed"
                   .format("100", '#' * bar_len, total, total))
             print("{0} folders have already been submitted!".format(already_submitted))
     if len(no_resp) > 0:
@@ -298,8 +298,9 @@ def submit_and_dl(user_id, base_folder, report_links_file, batch):
         print("Appending to report linking file {0}...".format(report_links_file))
         new_file = []
         with open(report_links_file, mode='r', encoding='utf-8') as ofile:
-            for line in ofile[:-1]:
+            for line in ofile:
                 new_file.append(line)
+            new_file = new_file[:-1]
             for line in report_index[1:]:
                 new_file.append(line)
         with open(report_links_file, mode='w', encoding='utf-8') as ofile:
