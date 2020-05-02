@@ -213,7 +213,7 @@ def submit_files(user_id, base_folder, batch):
                     if batch:
                         if total_submitted >= 100:
                             print("WARN: Batching limit reached! Won't download more!")
-                            breakgi
+                            break
                     m = mosspy.Moss(user_id, "java")
 
                     # Adds all java files in the current directory as well as its subdirectories
