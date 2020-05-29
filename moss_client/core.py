@@ -5,6 +5,7 @@ import time
 from bs4 import BeautifulSoup
 
 from moss_client.dl_helper import dl_report
+known_repos = ['Bitbucket', 'GitLab', 'Github', 'Gitorious', 'Google_Code', 'Fedora_Project', 'Google_Android']
 
 
 def parse_reports_into_dict(paths, src_repo):
@@ -111,16 +112,21 @@ def join_parsed_data_with(parsed_data, join_file, report_csv_file):
                             joined_row[joined_keys[3]] = file_2
                             joined_row[joined_keys[4]] = parsed_row[basic_keys[2]]
                             joined_row[joined_keys[5]] = parsed_row[basic_keys[3]]
-                            joined_row[joined_keys[6]] = parsed_row[basic_keys[4]]
+                            joined_row[joined_keys[6]] = parsed_row[basic_keys[4]].replace(' ', '_')
                             break
             if joined_row[joined_keys[0]] is None:
+                repo_name = "None"
+                for repo in known_repos:
+                    if repo in og_sc_filepath:
+                        repo_name = repo
+
                 joined_row[joined_keys[0]] = og_sc_filepath
                 joined_row[joined_keys[1]] = og_so_link
                 joined_row[joined_keys[2]] = "None"
                 joined_row[joined_keys[3]] = "None"
                 joined_row[joined_keys[4]] = 0
                 joined_row[joined_keys[5]] = 0.0
-                joined_row[joined_keys[6]] = "None"
+                joined_row[joined_keys[6]] = repo_name
             joined_csv.append(joined_row)
 
         with open(report_csv_file, mode='w', encoding='utf-8', newline='') as csv_file:

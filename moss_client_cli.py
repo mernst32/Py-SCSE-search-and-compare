@@ -32,20 +32,21 @@ def handle_input(user_id, base_folder, parse, only_parse, join_file, batch):
         parse_moss_reports(report_links_file, report_csv_file, join_file)
 
 
-parser = argparse.ArgumentParser(
-    description="MOSS CLI client for submitting java files to the service and downloading the report from the service "
-                "locally. Will go through the sub folders of the given folder and submit the java files for plagiarism "
-                "checks and download the reports locally, creating a linking file in the process")
-parser.add_argument('user_id', metavar='U', nargs=1, help="Your user-id for the MOSS service.")
-parser.add_argument('folder', metavar='F', nargs=1, help="The folder whose contents you want to submit.")
-parser.add_argument('-p', '--parse', action='store_true', help="Parses the moss reports into a csv file.")
-parser.add_argument('-o', '--only-parse', action='store_true',
-                    help="Only parses the local moss reports and does not submit files and download the reports. "
-                         "Requires the reports and the links_to_reports html file created normally by this app.")
-parser.add_argument('-j', '--join-file', nargs=1, default=[""],
-                    help="When the parse or only-parse option is given, joins the parsed data with the parsed data.")
-parser.add_argument('-b', '--batch-mode', action='store_true',
-                    help="Only submits a 100 folders to the Moss Service, also looks for already processed folders so "
-                         "that it does not submit those again.")
-args = parser.parse_args()
-handle_input(args.user_id[0], args.folder[0], args.parse, args.only_parse, args.join_file[0], args.batch_mode)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="MOSS CLI client for submitting java files to the service and downloading the report from the "
+                    "service locally. Will go through the sub folders of the given folder and submit the java files "
+                    "for plagiarism checks and download the reports locally, creating a linking file in the process")
+    parser.add_argument('user_id', metavar='U', nargs=1, help="Your user-id for the MOSS service.")
+    parser.add_argument('folder', metavar='F', nargs=1, help="The folder whose contents you want to submit.")
+    parser.add_argument('-p', '--parse', action='store_true', help="Parses the moss reports into a csv file.")
+    parser.add_argument('-o', '--only-parse', action='store_true',
+                        help="Only parses the local moss reports and does not submit files and download the reports. "
+                             "Requires the reports and the links_to_reports html file created normally by this app.")
+    parser.add_argument('-j', '--join-file', nargs=1, default=[""],
+                        help="When the parse or only-parse option is given, joins the parsed data with the parsed data.")
+    parser.add_argument('-b', '--batch-mode', action='store_true',
+                        help="Only submits a 100 folders to the Moss Service, also looks for already processed folders so "
+                             "that it does not submit those again.")
+    args = parser.parse_args()
+    handle_input(args.user_id[0], args.folder[0], args.parse, args.only_parse, args.join_file[0], args.batch_mode)

@@ -57,11 +57,12 @@ def handle_input(search, info, repo, per_page):
         print("ERROR:Could not get data from {0}: {1}".format(url, repr(e)))
 
 
-parser = argparse.ArgumentParser(
-    description='Download Java Code from searchcode, that contain the a StackOverflow Link.')
-parser.add_argument('-i', '--info', action='store_true', help="only get the number of results.")
-parser.add_argument('-r', '--repo', nargs=1, type=int, default=[-1],
-                    help="specify the repo to search by giving the repo_id.")
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Download Java Code from searchcode, that contain the a StackOverflow Link.')
+    parser.add_argument('-i', '--info', action='store_true', help="only get the number of results.")
+    parser.add_argument('-r', '--repo', nargs=1, type=int, default=[-1],
+                        help="specify the repo to search by giving the repo_id.")
+    args = parser.parse_args()
 
-handle_input("stackoverflow.com", args.info, args.repo[0], 20)
+    handle_input("stackoverflow.com", args.info, args.repo[0], 20)

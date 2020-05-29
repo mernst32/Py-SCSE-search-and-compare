@@ -1,3 +1,4 @@
+rpy2
 beautifulsoup4
 py-stackexchange==2.2.7
 mosspy==1.0.8

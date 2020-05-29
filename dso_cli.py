@@ -86,29 +86,30 @@ def handle_input(e_id, question, best, accepted, input_file, output_file, verbos
         print("StackExchangeError: {0}".format(e.message))
 
 
-parser = argparse.ArgumentParser(
-    description='Download code snippets from StackOverflow')
-parser.add_argument('entity_id', metavar='I', nargs=1,
-                    help="The id of the entity, either an answer or a question, from which the code snippet(s) will "
-                         "be downloaded.")
-parser.add_argument('-q', '--question', action='store_true',
-                    help="Get the code snippet(s) from a question body instead.")
-parser.add_argument('-b', '--best-answer', action='store_true',
-                    help="When the question option is used, this option tells the program to get the highest rated "
-                         "answer of the specified question.")
-parser.add_argument('-a', '--accepted-answer', action='store_true',
-                    help="When the question option is used, this option tells the program to get the accepted answer "
-                         "of the specified question. If there is no accepted answer the highest rated answer is used "
-                         "instead. ")
-parser.add_argument('-o', '--output-file', nargs=1, default=[""],
-                    help="Saves extracted code snippet to file with the specified name, or if there are more than one "
-                         "to a folder of the same name.")
-parser.add_argument('-i', '--input-file', action='store_true',
-                    help="Parses data from CSV file and uses that data to get code snippets and downloads them into "
-                         "data/extracted_data/. REQUIRED HEADERS: Stackoverflow_Links, SC_Filepath. OPTIONAL HEADER: "
-                         "Download.")
-parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Download code snippets from StackOverflow')
+    parser.add_argument('entity_id', metavar='I', nargs=1,
+                        help="The id of the entity, either an answer or a question, from which the code snippet(s) "
+                             "will be downloaded.")
+    parser.add_argument('-q', '--question', action='store_true',
+                        help="Get the code snippet(s) from a question body instead.")
+    parser.add_argument('-b', '--best-answer', action='store_true',
+                        help="When the question option is used, this option tells the program to get the highest rated "
+                             "answer of the specified question.")
+    parser.add_argument('-a', '--accepted-answer', action='store_true',
+                        help="When the question option is used, this option tells the program to get the accepted "
+                             "answer of the specified question. If there is no accepted answer the highest rated "
+                             "answer is used instead. ")
+    parser.add_argument('-o', '--output-file', nargs=1, default=[""],
+                        help="Saves extracted code snippet to file with the specified name, or if there are more than"
+                             " one to a folder of the same name.")
+    parser.add_argument('-i', '--input-file', action='store_true',
+                        help="Parses data from CSV file and uses that data to get code snippets and downloads them "
+                             "into data/extracted_data/. REQUIRED HEADERS: Stackoverflow_Links, SC_Filepath. OPTIONAL "
+                             "HEADER: Download.")
+    parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
-args = parser.parse_args()
-handle_input(args.entity_id[0], args.question, args.best_answer, args.accepted_answer, args.input_file,
-             args.output_file[0], args.verbose)
+    args = parser.parse_args()
+    handle_input(args.entity_id[0], args.question, args.best_answer, args.accepted_answer, args.input_file,
+                 args.output_file[0], args.verbose)

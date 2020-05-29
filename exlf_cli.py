@@ -22,17 +22,18 @@ def handle_input(file, query, copyline, outfile, verbose):
         scan_file(file, query, copyline, csv_filename, verbose)
 
 
-parser = argparse.ArgumentParser(
-    description="Scans Java files for a StackOverflow links and returns those in a csv sanitized as much as possible.")
-parser.add_argument('file', metavar='F', nargs=1, help="file to be scanned.")
-parser.add_argument('-r', '--recursive', action='store_true', help="scan a directory recursively.")
-parser.add_argument('-o', '--output-file', action='store_true',
-                    help="save output in csv file found in data/extracted_data.csv.")
-parser.add_argument('-c', '--copy-line', action='store_true',
-                    help="copy first line of the scanned file(s), removing comment characters like \"//\". This works "
-                         "in tandem with dsc_cli.py which writes the link to the raw file in the first line with a "
-                         "preceding \"//\".")
-parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Scans Java files for a StackOverflow links and returns those in a csv sanitized as much as possible.")
+    parser.add_argument('file', metavar='F', nargs=1, help="file to be scanned.")
+    parser.add_argument('-r', '--recursive', action='store_true', help="scan a directory recursively.")
+    parser.add_argument('-o', '--output-file', action='store_true',
+                        help="save output in csv file found in data/extracted_data.csv.")
+    parser.add_argument('-c', '--copy-line', action='store_true',
+                        help="copy first line of the scanned file(s), removing comment characters like \"//\". This works "
+                             "in tandem with dsc_cli.py which writes the link to the raw file in the first line with a "
+                             "preceding \"//\".")
+    parser.add_argument('-v', '--verbose', action='store_true', help="gives a more detailed output")
 
-args = parser.parse_args()
-handle_input(args.file[0], "stackoverflow.com", args.copy_line, args.output_file, args.verbose)
+    args = parser.parse_args()
+    handle_input(args.file[0], "stackoverflow.com", args.copy_line, args.output_file, args.verbose)
