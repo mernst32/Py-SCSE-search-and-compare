@@ -10,3 +10,4 @@ build/
 dist/
 Py_SCSO_Compare.egg-info/
 *.png
+data/
