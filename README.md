@@ -1,7 +1,9 @@
 # Py-SCSO-Compare
-This is neither an official Searchcode nor an official Stackoverflow application! Just something I wrote for my bachelor thesis.
+This is neither an official Searchcode nor an official Stackoverflow application! Just something I wrote for my bachelor thesis. 
+## Requirements
+Python 3+ required + the contents of the `requirements.txt` file.
 ## Usage
-All of the scripts should be used as CLI applications, but I also restructered them to modules. So you can use them in that way as well. Anyway if you want to run them as CLI apps just clone/download this repo and run the scripts in order of appearance. Python 3+ required + the contents of the requirements.txt file.
+All of the scripts should be used as CLI applications, but I also restructered them to modules. So you can use them in that way as well. Anyway if you want to run them as CLI apps just clone/download this repo and run the scripts in order of appearance.
 ### dsc_cli.py
 ```
 
