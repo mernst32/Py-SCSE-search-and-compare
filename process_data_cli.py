@@ -285,4 +285,6 @@ if __name__ == "__main__":
     do_plotting_with_threshold(df_final_025, 0.25, percent=True)
     do_plotting_with_threshold(df_final_025, 0.25, percent=False)
 
+    print('\n', df_final_025)
+
     print('\nDone')
