@@ -110,73 +110,72 @@ def calc_percent(df, index):
     return percentage
 
 
-if __name__ == "__main__":
-    print('Parsing data from CSV file:', raw_csv + '...')
-    data_frame = pd.read_csv(raw_csv, usecols=['SC_Filepath', 'Stackoverflow_Links', 'File_1', 'File_2',
-                                               'Lines_Matched', 'Code_Similarity', 'Src_Repo'])
+def do_plotting_with_threshold(df, copy_threshold, percent=True):
+    if percent:
+        a_list = repository_names.copy()
+        a_list.append('Total')
+        copied_list = []
+        not_copied_list = []
+        for repository_name in a_list:
+            repo_copied_percent, repo_not_copied_percent = calc_copy_percent(df, repository_name)
 
-    df_matches = get_matches_df(data_frame)
-    df_repo = group_data_by_repo(data_frame)
+            copied_list.append(repo_copied_percent)
+            not_copied_list.append(repo_not_copied_percent)
+        n = len(a_list)
+        ind = np.arange(n)
+        width = 0.4
 
-    # join repo stats and matching stats for repos together
-    df_repo_stats = df_matches.join(df_repo)
+        p1 = plt.bar(ind, not_copied_list, width, color=['green'], edgecolor=['black'])
+        p2 = plt.bar(ind, copied_list, width, bottom=not_copied_list, color=['red'], edgecolor=['black'])
 
-    # get stats for the files that had more than half of a match with StackOverflow snippets and the ones who did not
-    df_copied_stats = get_percentile_copy_matches(data_frame, 0.5)
+        plt.ylabel('Prozent')
+        plt.title('Wieviel wurde von SO kopiert? (copy_threshold = {}, Prozent)'.format(copy_threshold))
+        plt.xticks(ind, a_list)
+        plt.yticks(np.arange(0, 120, 10))
+        plt.legend((p1[0], p2[0]), ('Nicht kopiert', 'Kopiert'))
+        print('Plotting box-plot for the comparison of copied and not copied files with relative data and the copy_'
+              'threshold', str(copy_threshold), '...')
+        plt.show()
+    else:
+        a_list = repository_names.copy()
+        a_list.append('Total')
+        copied_list = []
+        not_copied_list = []
+        for repository_name in a_list:
+            repo_copied_percent = df.loc[repository_name, 'Copied_from_SO']
+            repo_not_copied_percent = df.loc[repository_name, 'Not_Copied_from_SO']
 
-    # put everything together
-    df_final = df_repo_stats.join(df_copied_stats).sort_values(by=['Found_SO_Links'])
-    print('\nThe parsed data as a', type(df_final).__name__, ':')
-    print(df_final, '\n')
+            copied_list.append(repo_copied_percent)
+            not_copied_list.append(repo_not_copied_percent)
+        n = len(a_list)
+        ind = np.arange(n)
+        width = 0.4
 
-    plot_overview(df_final)
+        p1 = plt.bar(ind, not_copied_list, width, color=['green'], edgecolor=['black'])
+        p2 = plt.bar(ind, copied_list, width, bottom=not_copied_list, color=['red'], edgecolor=['black'])
 
-    fig = plt.figure()
-    n_cols = 3
-    n_rows = (len(repository_names) / n_cols) + 1
-    for count, repository_name in enumerate(repository_names):
-        plt.subplot(n_rows, n_cols, count + 1)
-        setup_plot_repository(df_final, repository_name)
-    # adjusting space between subplots
-    fig.subplots_adjust(hspace=.5, wspace=.1)
-    print('Plotting grid arrangement of all Repos...')
-    # function to show the plot
-    plt.show()
+        plt.ylabel('Analysierte Dateien')
+        plt.title('Wieviel wurde von SO kopiert? (copy_threshold = {}, Absolut)'.format(copy_threshold))
+        plt.xticks(ind, a_list)
+        plt.yticks(np.arange(0, df.loc['Total', 'Processed_Files'] + 200, 100))
+        plt.legend((p1[0], p2[0]), ('Nicht kopiert', 'Kopiert'))
+        print('Plotting box-plot for the comparison of copied and not copied files with absolute data and the '
+              'copy_threshold', str(copy_threshold), '...')
+        plt.show()
 
-    a_list = repository_names.copy()
-    a_list.append('Total')
-    copied_list = []
-    not_copied_list = []
-    for repository_name in a_list:
-        repo_copied_percent, repo_not_copied_percent = calc_copy_percent(df_final, repository_name)
-        copied_list.append(repo_copied_percent)
-        not_copied_list.append(repo_not_copied_percent)
-    N = len(a_list)
-    ind = np.arange(N)
-    width = 0.4
 
-    p1 = plt.bar(ind, not_copied_list, width, color=['green'], edgecolor=['black'])
-    p2 = plt.bar(ind, copied_list, width, bottom=not_copied_list, color=['red'], edgecolor=['black'])
-
-    plt.ylabel('Prozent')
-    plt.title('Wieviel wurde prozentuell von SO kopiert')
-    plt.xticks(ind, a_list)
-    plt.yticks(np.arange(0, 120, 10))
-    plt.legend((p1[0], p2[0]), ('Nicht kopiert', 'Kopiert'))
-    print('Plotting box-plot for the comparison of copied and not copied files...')
-    plt.show()
-
+def plot_pie_chart(df):
     # Pie chart, where the slices will be ordered and plotted counter-clockwise:
     sizes = []
     others = []
     others_labels = []
-    for repository_name in repository_names:
-        percent = calc_percent(df_final, repository_name)
+    for name in repository_names:
+        percent = calc_percent(df, name)
         if percent > 10:
             sizes.append(percent)
         else:
             others.append(percent)
-            others_labels.append(repository_name)
+            others_labels.append(name)
     if len(others) != 0:
         others_size = 0
         for other in others:
@@ -197,6 +196,93 @@ if __name__ == "__main__":
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     print('Plotting the division of files as a pie-chart...')
     plt.show()
+
+
+def plot_copy_threshold_comparison(df_list, percent=True):
+    if not percent:
+        copied_list = []
+        not_copied_list = []
+        for df_final in df_list:
+            copied = df_final.loc['Total', 'Copied_from_SO']
+            not_copied = df_final.loc['Total', 'Not_Copied_from_SO']
+
+            copied_list.append(copied)
+            not_copied_list.append(not_copied)
+        n = len(df_list)
+        ind = np.arange(n)
+        width = 0.4
+
+        p1 = plt.bar(ind, not_copied_list, width, color=['green'], edgecolor=['black'])
+        p2 = plt.bar(ind, copied_list, width, bottom=not_copied_list, color=['red'], edgecolor=['black'])
+
+        plt.ylabel('Anzahl der analysierten Dateien')
+        plt.xlabel('Die Übereinstimmungsschwellwerte')
+        plt.title('Gegenüberstellung der Ergebnisse für die unterschiedlichen Schwellwerte (Absolut)')
+        plt.xticks(ind, ['1 %', '25 %', '50 %', '75 %'])
+        plt.yticks(np.arange(0, df_list[0].loc['Total', 'Processed_Files'] + 200, 100))
+        plt.legend((p1[0], p2[0]), ('Nicht kopiert', 'Kopiert'))
+        print('Plotting box-plot for the comparison of copied and not copied files as absolute...')
+        plt.show()
+    else:
+        copied_list = []
+        not_copied_list = []
+        for df_final in df_list:
+            copied_percent, not_copied_percent = calc_copy_percent(df_final, 'Total')
+            copied_list.append(copied_percent)
+            not_copied_list.append(not_copied_percent)
+        n = len(df_list)
+        ind = np.arange(n)
+        width = 0.4
+
+        p1 = plt.bar(ind, not_copied_list, width, color=['green'], edgecolor=['black'])
+        p2 = plt.bar(ind, copied_list, width, bottom=not_copied_list, color=['red'], edgecolor=['black'])
+
+        plt.ylabel('Prozent')
+        plt.xlabel('Die Übereinstimmungsschwellwerte')
+        plt.title('Gegenüberstellung der Ergebnisse für die unterschiedlichen Schwellwerte (Prozent)')
+        plt.xticks(ind, ['1 %', '25 %', '50 %', '75 %'])
+        plt.yticks(np.arange(0, 120, 10))
+        plt.legend((p1[0], p2[0]), ('Nicht kopiert', 'Kopiert'))
+        print('Plotting box-plot for the comparison of copied and not copied files as percent...')
+        plt.show()
+
+
+if __name__ == "__main__":
+    print('Parsing data from CSV file:', raw_csv + '...')
+    data_frame = pd.read_csv(raw_csv, usecols=['SC_Filepath', 'Stackoverflow_Links', 'File_1', 'File_2',
+                                               'Lines_Matched', 'Code_Similarity', 'Src_Repo'])
+
+    df_matches = get_matches_df(data_frame)
+    df_repo = group_data_by_repo(data_frame)
+
+    # join repo stats and matching stats for repos together
+    df_repo_stats = df_matches.join(df_repo)
+
+    plot_pie_chart(df_repo_stats)
+
+    # get stats for the files that had more than half of a match with StackOverflow snippets and the ones who did not
+    df_copied_list = []
+
+    df_copied_stats_with_001 = get_percentile_copy_matches(data_frame, 0.01)
+    df_final_001 = df_repo_stats.join(df_copied_stats_with_001).sort_values(by=['Found_SO_Links'])
+    df_copied_list.append(df_final_001)
+
+    df_copied_stats_with_025 = get_percentile_copy_matches(data_frame, 0.25)
+    df_final_025 = df_repo_stats.join(df_copied_stats_with_025).sort_values(by=['Found_SO_Links'])
+    df_copied_list.append(df_final_025)
+
+    df_copied_stats_with_050 = get_percentile_copy_matches(data_frame, 0.50)
+    df_final_050 = df_repo_stats.join(df_copied_stats_with_050).sort_values(by=['Found_SO_Links'])
+    df_copied_list.append(df_final_050)
+
+    df_copied_stats_with_075 = get_percentile_copy_matches(data_frame, 0.75)
+    df_final_075 = df_repo_stats.join(df_copied_stats_with_075).sort_values(by=['Found_SO_Links'])
+    df_copied_list.append(df_final_075)
+
+    plot_copy_threshold_comparison(df_copied_list, percent=True)
+    plot_copy_threshold_comparison(df_copied_list, percent=False)
+
+    do_plotting_with_threshold(df_final_025, 0.25, percent=True)
+    do_plotting_with_threshold(df_final_025, 0.25, percent=False)
+
     print('\nDone')
-
-
