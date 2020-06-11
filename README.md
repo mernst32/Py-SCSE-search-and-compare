@@ -1,7 +1,13 @@
 # Py-SCSO-Compare
-This is neither an official Searchcode nor an official Stackoverflow application!
-## dsc_cli.py
+This is neither an official Searchcode nor an official Stackoverflow application! Just something I wrote for my bachelor thesis. 
+## Requirements
+Python 3+ required + the contents of the `requirements.txt` file.
+## Usage
+All of the scripts should be used as CLI applications, but I also restructered them to modules. So you can use them in that way as well. Anyway if you want to run them as CLI apps just clone/download this repo and run the scripts in order of appearance.
+### dsc_cli.py
 ```
+
+$ py dsc_cli.py -h
 usage: dsc_cli.py [-h] [-i] [-r REPO]
 
 Download Java Code from searchcode, that contain the a StackOverflow Link.
@@ -10,10 +16,13 @@ optional arguments:
   -h, --help            show this help message and exit
   -i, --info            only get the number of results.
   -r REPO, --repo REPO  specify the repo to search by giving the repo_id.
+
 ```
 
-## exlf_cli.py
+### exlf_cli.py
 ```
+
+$ py exlf_cli.py -h
 usage: exlf_cli.py [-h] [-r] [-o] [-c] [-v] F
 
 Scans Java files for a StackOverflow links and returns those in a csv
@@ -31,10 +40,13 @@ optional arguments:
                      dsc_cli.py which writes the link to the raw file in the
                      first line with a preceding "//".
   -v, --verbose      gives a more detailed output
+
 ```
 
-## dso_cli.py
+### dso_cli.py
 ```
+
+$ py dso_cli.py -h
 usage: dso_cli.py [-h] [-q] [-b] [-a] [-o OUTPUT_FILE] [-i] [-v] I
 
 Download code snippets from StackOverflow
@@ -64,11 +76,14 @@ optional arguments:
                         Stackoverflow_Links, SC_Filepath. OPTIONAL HEADER:
                         Download.
   -v, --verbose         gives a more detailed output
+
 ```
 
-## moss_cli_client.py
+### moss_cli_client.py
 ```
-usage: moss_client_cli.py [-h] [-p] [-o] [-j JOIN_FILE] U F
+
+$ py moss_client_cli.py -h
+usage: moss_client_cli.py [-h] [-p] [-o] [-j JOIN_FILE] [-b] U F
 
 MOSS CLI client for submitting java files to the service and downloading the
 report from the service locally. Will go through the sub folders of the given
@@ -89,4 +104,14 @@ optional arguments:
   -j JOIN_FILE, --join-file JOIN_FILE
                         When the parse or only-parse option is given, joins
                         the parsed data with the parsed data.
+  -b, --batch-mode      Only submits a 100 folders to the Moss Service, also
+                        looks for already processed folders so that it does
+                        not submit those again.
+
+```
+
+### process_data_cli.py
+No arguments needed, just run the following
+```
+$ py process_data_cli.py
 ```
