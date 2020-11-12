@@ -1,5 +1,8 @@
 # Py-SCSO-Compare
-This is neither an official Searchcode nor an official Stackoverflow application! Just something I wrote for my bachelor thesis. 
+This is neither an official Searchcode nor an official Stackoverflow application! Just something I wrote for my bachelor thesis.
+
+It gathers code-files from open-source projects via the `searchcode.com` api, then gathers code-snippets from `StackOverflow` via it's api using links found in the comments of the open-source files and finally submits them to `MOSS` and parses the results locally into an index file. Which is used to generate statistics and diagrams to visualize the amount of copy&paste happening within open-source projects.
+
 ## Requirements
 Python 3+ required + the contents of the `requirements.txt` file.
 ## Usage
