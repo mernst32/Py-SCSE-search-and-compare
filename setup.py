@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="Py-SCSO-Compare",
-    version="0.0.1",
+    version="1.0",
     author="Maximilian Ernst",
     author_email="mernst32@yahoo.com",
     description="Search and download Java files that contain StackOverflow links from Searchcode, and compare them "
@@ -18,7 +18,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
     ],
     python_requires='>=3.6',
